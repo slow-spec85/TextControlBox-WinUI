@@ -428,8 +428,11 @@ internal class PointerActionsManager
     {
         var delta = e.GetCurrentPoint(coreTextbox.canvasSelection).Properties.MouseWheelDelta;
         bool needsUpdate = false;
-        //Zoom using mousewheel
-        if (Utils.IsKeyPressed(VirtualKey.Control))
+        //Zoom using mousewheel or a precision-touchpad pinch. A pinch gesture is delivered by
+        //Windows as a Ctrl-modified wheel, but that Control comes from the wheel message
+        //(e.KeyModifiers), not the physical keyboard state, so Utils.IsKeyPressed alone misses it.
+        //Check both so pinch-to-zoom works on precision touchpads.
+        if (Utils.IsKeyPressed(VirtualKey.Control) || e.KeyModifiers.HasFlag(VirtualKeyModifiers.Control))
         {
             zoomManager._ZoomFactor += delta / 20;
             zoomManager.UpdateZoom();
