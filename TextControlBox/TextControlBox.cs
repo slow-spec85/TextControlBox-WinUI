@@ -789,6 +789,19 @@ public partial class TextControlBox : UserControl
     }
 
     /// <summary>
+    /// Gets or sets the color of the editor body text.
+    /// </summary>
+    /// <remarks>
+    /// This is the base text color. When syntax highlighting is enabled, per-token colors from the
+    /// active <see cref="SyntaxHighlighting"/> still take precedence for highlighted tokens.
+    /// </remarks>
+    public Windows.UI.Color TextColor
+    {
+        get => coreTextBox.TextColor;
+        set => coreTextBox.TextColor = value;
+    }
+
+    /// <summary>
     /// Gets or sets a value indicating whether line numbers should be displayed in the textbox.
     /// </summary>
     public bool ShowLineNumbers
