@@ -23,6 +23,7 @@ internal class CursorRenderer
     private LineHighlighterRenderer lineHighlighterRenderer;
     private EventsManager eventsManager;
     private LongestLineManager longestLineManager;
+    private CaretBlinkManager caretBlinkManager;
 
     public void Init(
         CursorManager cursorManager,
@@ -35,7 +36,8 @@ internal class CursorRenderer
         DesignHelper designHelper,
         LineHighlighterRenderer lineHighlighterRenderer,
         EventsManager eventsManager,
-        LongestLineManager longestLineManager)
+        LongestLineManager longestLineManager,
+        CaretBlinkManager caretBlinkManager)
     {
         this.cursorManager = cursorManager;
         this.currentLineManager = currentLineManager;
@@ -48,6 +50,7 @@ internal class CursorRenderer
         this.lineHighlighterRenderer = lineHighlighterRenderer;
         this.eventsManager = eventsManager;
         this.longestLineManager = longestLineManager;
+        this.caretBlinkManager = caretBlinkManager;
     }
 
     public void RenderCursor(CanvasTextLayout textLayout, int characterPosition, float xOffset, float y, float fontSize, CursorSize customSize, CanvasDrawEventArgs args, CanvasSolidColorBrush cursorColorBrush)
@@ -91,15 +94,20 @@ internal class CursorRenderer
             if (characterPos > currentLineLength)
                 characterPos = currentLineLength;
 
-            RenderCursor(
-                textRenderer.CurrentLineTextLayout,
-                characterPos,
-                (float)-scrollManager.HorizontalScroll,
-                renderPosY,
-                zoomManager.ZoomedFontSize,
-                _CursorSize,
-                args,
-                designHelper.CursorColorBrush);
+            // Only paint the caret during the "on" phase of the blink. The current-line highlighter
+            // below stays unconditional so the highlighted line does not flicker while the caret blinks.
+            if (caretBlinkManager.IsCaretVisible)
+            {
+                RenderCursor(
+                    textRenderer.CurrentLineTextLayout,
+                    characterPos,
+                    (float)-scrollManager.HorizontalScroll,
+                    renderPosY,
+                    zoomManager.ZoomedFontSize,
+                    _CursorSize,
+                    args,
+                    designHelper.CursorColorBrush);
+            }
 
             if (!cursorManager.Equals(cursorManager.currentCursorPosition, cursorManager.oldCursorPosition))
             {
