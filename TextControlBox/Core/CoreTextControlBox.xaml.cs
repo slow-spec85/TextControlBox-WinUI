@@ -512,30 +512,66 @@ internal sealed partial class CoreTextControlBox : UserControl
     }
 
     //Canvas event
+    // A Win2D draw callback runs inside the composition/render pipeline. If it throws, WinUI
+    // re-raises the exception as a stowed exception (0xc000027b) that fail-fasts the whole
+    // process and bypasses the managed UnhandledException handler, so it cannot be caught by
+    // the app. Transient out-of-range layout/geometry can occur while rendering very large or
+    // rapidly-changing content (e.g. the rebuilt text layout and a computed selection/slice
+    // index momentarily disagree and CanvasTextLayout.GetCharacterRegions throws E_INVALIDARG).
+    // Guarding each draw handler turns the worst case into a single skipped frame (the canvas
+    // redraws on the next invalidation) instead of a crash.
     private void Canvas_Text_Draw(CanvasControl sender, CanvasDrawEventArgs args)
     {
-        textRenderer.Draw(sender, args);
+        try
+        {
+            textRenderer.Draw(sender, args);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"TextControlBox: Canvas_Text_Draw failed: {ex}");
+        }
         initializationManager.CanvasDrawed(0);
     }
     private void Canvas_Selection_Draw(CanvasControl sender, CanvasDrawEventArgs args)
     {
-        selectionRenderer.Draw(sender, args);
+        try
+        {
+            selectionRenderer.Draw(sender, args);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"TextControlBox: Canvas_Selection_Draw failed: {ex}");
+        }
         initializationManager.CanvasDrawed(1);
     }
     private void Canvas_Cursor_Draw(CanvasControl sender, CanvasDrawEventArgs args)
     {
-        cursorRenderer.Draw(Canvas_Text, Canvas_Cursor, args);
+        try
+        {
+            cursorRenderer.Draw(Canvas_Text, Canvas_Cursor, args);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"TextControlBox: Canvas_Cursor_Draw failed: {ex}");
+        }
         initializationManager.CanvasDrawed(2);
     }
     private void Canvas_LineNumber_Draw(CanvasControl sender, CanvasDrawEventArgs args)
     {
-        if (!lineNumberManager._ShowLineNumbers)
+        try
         {
-            lineNumberRenderer.HideLineNumbers(sender, lineNumberManager._SpaceBetweenLineNumberAndText);
-            return;
-        }
+            if (!lineNumberManager._ShowLineNumbers)
+            {
+                lineNumberRenderer.HideLineNumbers(sender, lineNumberManager._SpaceBetweenLineNumberAndText);
+                return;
+            }
 
-        lineNumberRenderer.Draw(Canvas_LineNumber, args, lineNumberManager._SpaceBetweenLineNumberAndText);
+            lineNumberRenderer.Draw(Canvas_LineNumber, args, lineNumberManager._SpaceBetweenLineNumberAndText);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"TextControlBox: Canvas_LineNumber_Draw failed: {ex}");
+        }
     }
 
     //Focus:
