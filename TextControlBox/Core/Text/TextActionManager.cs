@@ -500,8 +500,15 @@ namespace TextControlBoxNS.Core.Text
             }
 
             eventsManager.CallTextChanged();
-            scrollManager.ScrollLineIntoViewIfOutside(cursorManager.LineNumber, false);
-            
+            // Keep the caret visible after typing using the same helper every other edit
+            // operation uses. Backspace, Delete, AddNewLine, Undo and Redo all call
+            // UpdateScrollToShowCursor; AddCharacter was the only one still using the
+            // line-granularity ScrollLineIntoViewIfOutside, which does not scroll while the
+            // caret stays on the same (long) line, so a caret typed past the right edge could
+            // fall outside the rendered area. Using the shared helper makes the caret follow
+            // consistent with the rest of the edit operations.
+            scrollManager.UpdateScrollToShowCursor(false);
+
             canvasUpdateManager.UpdateAll();
         }
 
