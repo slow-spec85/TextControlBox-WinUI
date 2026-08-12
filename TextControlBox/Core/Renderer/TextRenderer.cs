@@ -19,11 +19,14 @@ internal class TextRenderer
     public bool NeedsUpdateTextLayout = true;
     public bool NeedsTextFormatUpdate = true;
     public float SingleLineHeight { get => TextFormat == null ? 0 : TextFormat.LineSpacing; }
+    public float TextVerticalOffset => textLayoutManager.TextVerticalOffset;
     public float HorizontalOffset => (float)-scrollManager.HorizontalScroll;
     public int NumberOfStartLine = 0;
     public int NumberOfRenderedLines = 0;
     public string RenderedText = "";
     public string OldRenderedText = null;
+    private int oldNumberOfStartLine = -1;
+    private long oldSyntaxStateRevision = -1;
 
     private CursorManager cursorManager;
     private TextManager textManager;
@@ -40,6 +43,8 @@ internal class TextRenderer
     private WhitespaceCharactersRenderer invisibleCharactersRenderer;
     private LinkRenderer linkRenderer;
     private LinkHighlightManager linkHighlightManager;
+    private StatefulSyntaxHighlightingManager statefulSyntaxHighlightingManager;
+    private TextDecorationRenderer textDecorationRenderer;
 
     public void Init(
         CursorManager cursorManager,
@@ -55,7 +60,9 @@ internal class TextRenderer
         ZoomManager zoomManager,
         WhitespaceCharactersRenderer invisibleCharactersRenderer,
         LinkRenderer linkRenderer,
-        LinkHighlightManager linkHighlightManager)
+        LinkHighlightManager linkHighlightManager,
+        StatefulSyntaxHighlightingManager statefulSyntaxManager,
+        TextDecorationRenderer rangeDecorationRenderer)
     {
         this.cursorManager = cursorManager;
         this.textManager = textManager;
@@ -72,6 +79,8 @@ internal class TextRenderer
         this.invisibleCharactersRenderer = invisibleCharactersRenderer;
         this.linkRenderer = linkRenderer;
         this.linkHighlightManager = linkHighlightManager;
+        statefulSyntaxHighlightingManager = statefulSyntaxManager;
+        textDecorationRenderer = rangeDecorationRenderer;
     }
 
     public void CheckDispose()
@@ -139,6 +148,7 @@ internal class TextRenderer
         var renderTextData = textManager.GetLinesForRendering(NumberOfStartLine, NumberOfRenderedLines);
         var linesToRenderRef = renderTextData.Lines;
         RenderedText = renderTextData.Text;
+        long syntaxStateRevision = statefulSyntaxHighlightingManager.Revision;
 
         //check rendering and calculation updates
         lineNumberRenderer.CheckGenerateLineNumberText();
@@ -146,14 +156,22 @@ internal class TextRenderer
         using CanvasCommandList canvasCommandList = new CanvasCommandList(args.DrawingSession);
         if ((OldRenderedText != null && OldRenderedText.Length != RenderedText.Length)
             || !RenderedText.Equals(OldRenderedText, StringComparison.Ordinal)
+            || oldNumberOfStartLine != NumberOfStartLine
+            || oldSyntaxStateRevision != syntaxStateRevision
             || NeedsUpdateTextLayout
         )
         {
             NeedsUpdateTextLayout = false;
             OldRenderedText = RenderedText;
+            oldNumberOfStartLine = NumberOfStartLine;
+            oldSyntaxStateRevision = syntaxStateRevision;
 
             DrawnTextLayout = textLayoutManager.CreateTextResource(canvasText, DrawnTextLayout, TextFormat, RenderedText, new Size { Height = canvasText.Size.Height, Width = coreTextbox.ActualWidth });
-            SyntaxHighlightingRenderer.UpdateSyntaxHighlighting(renderTextData, textManager.NewLineCharacter, DrawnTextLayout, designHelper._AppTheme, textManager._SyntaxHighlighting, coreTextbox.EnableSyntaxHighlighting);
+            SyntaxHighlightingRenderer.UpdateSyntaxHighlighting(renderTextData, NumberOfStartLine, textManager.NewLineCharacter, DrawnTextLayout, designHelper._AppTheme, textManager._SyntaxHighlighting, coreTextbox.EnableSyntaxHighlighting, statefulSyntaxHighlightingManager, coreTextbox.syntaxHighlightingSession);
+            textDecorationRenderer.ApplyForeground(
+                DrawnTextLayout,
+                NumberOfStartLine,
+                NumberOfRenderedLines);
         }
 
         scrollManager.EnsureHorizontalScrollBounds(canvasText, longestLineManager, false, zoomManager.ZoomNeedsRecalculateLongestLine);
@@ -183,11 +201,21 @@ internal class TextRenderer
                     designHelper._Design.SearchHighlightColor
                     );
 
-            ccls.DrawTextLayout(DrawnTextLayout, (float)-scrollManager.HorizontalScroll, SingleLineHeight, designHelper.TextColorBrush);
+            ccls.DrawTextLayout(
+                DrawnTextLayout,
+                (float)-scrollManager.HorizontalScroll,
+                TextVerticalOffset,
+                designHelper.TextColorBrush);
 
-            invisibleCharactersRenderer.DrawTabsAndSpaces(args, ccls, RenderedText, DrawnTextLayout, SingleLineHeight);
+            invisibleCharactersRenderer.DrawTabsAndSpaces(
+                args,
+                ccls,
+                RenderedText,
+                DrawnTextLayout,
+                TextVerticalOffset);
         }
         args.DrawingSession.DrawImage(canvasCommandList);
+        canvasUpdateManager.UpdateBackground();
 
         //Only update if needed, to reduce updates when scrolling
         if (lineNumberRenderer.CanUpdateCanvas())

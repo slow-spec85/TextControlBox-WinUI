@@ -18,9 +18,7 @@ internal class CursorRenderer
     private FocusManager focusManager;
     private TextManager textManager;
     private ScrollManager scrollManager;
-    private ZoomManager zoomManager;
     private DesignHelper designHelper;
-    private LineHighlighterRenderer lineHighlighterRenderer;
     private EventsManager eventsManager;
     private LongestLineManager longestLineManager;
     private CaretBlinkManager caretBlinkManager;
@@ -32,9 +30,7 @@ internal class CursorRenderer
         FocusManager focusManager,
         TextManager textManager,
         ScrollManager scrollManager,
-        ZoomManager zoomManager,
         DesignHelper designHelper,
-        LineHighlighterRenderer lineHighlighterRenderer,
         EventsManager eventsManager,
         LongestLineManager longestLineManager,
         CaretBlinkManager caretBlinkManager)
@@ -45,15 +41,13 @@ internal class CursorRenderer
         this.focusManager = focusManager;
         this.textManager = textManager;
         this.scrollManager = scrollManager;
-        this.zoomManager = zoomManager;
         this.designHelper = designHelper;
-        this.lineHighlighterRenderer = lineHighlighterRenderer;
         this.eventsManager = eventsManager;
         this.longestLineManager = longestLineManager;
         this.caretBlinkManager = caretBlinkManager;
     }
 
-    public void RenderCursor(CanvasTextLayout textLayout, int characterPosition, float xOffset, float y, float fontSize, CursorSize customSize, CanvasDrawEventArgs args, CanvasSolidColorBrush cursorColorBrush)
+    public void RenderCursor(CanvasTextLayout textLayout, int characterPosition, float xOffset, float y, float lineHeight, CursorSize customSize, CanvasDrawEventArgs args, CanvasSolidColorBrush cursorColorBrush)
     {
         if (textLayout == null)
             return;
@@ -61,7 +55,7 @@ internal class CursorRenderer
 
         Vector2 vector = textLayout.GetCaretPosition(characterPosition < 0 ? 0 : characterPosition, false);
         if (customSize == null)
-            args.DrawingSession.FillRectangle(vector.X + xOffset, y, 2, fontSize, cursorColorBrush);
+            args.DrawingSession.FillRectangle(vector.X + xOffset, y, 2, lineHeight, cursorColorBrush);
         else
             args.DrawingSession.FillRectangle(vector.X + xOffset + customSize.OffsetX, y + customSize.OffsetY, (float)customSize.Width, (float)customSize.Height, cursorColorBrush);
     }
@@ -94,8 +88,7 @@ internal class CursorRenderer
             if (characterPos > currentLineLength)
                 characterPos = currentLineLength;
 
-            // Only paint the caret during the "on" phase of the blink. The current-line highlighter
-            // below stays unconditional so the highlighted line does not flicker while the caret blinks.
+            // Only paint the caret during the "on" phase of the blink.
             if (caretBlinkManager.IsCaretVisible)
             {
                 RenderCursor(
@@ -103,7 +96,7 @@ internal class CursorRenderer
                     characterPos,
                     (float)-scrollManager.HorizontalScroll,
                     renderPosY,
-                    zoomManager.ZoomedFontSize,
+                    textRenderer.SingleLineHeight,
                     _CursorSize,
                     args,
                     designHelper.CursorColorBrush);
@@ -115,8 +108,5 @@ internal class CursorRenderer
                 eventsManager.CallSelectionChanged();
             }
         }
-
-        if (lineHighlighterRenderer.CanRender(focusManager))
-            lineHighlighterRenderer.Render((float)canvasCursor.ActualWidth, renderPosY, zoomManager.ZoomedFontSize, args, designHelper.LineHighlighterBrush);
     }
 }

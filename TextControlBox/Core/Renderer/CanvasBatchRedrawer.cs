@@ -17,12 +17,14 @@ namespace TextControlBoxNS.Core.Renderer
             _timer.Interval = TimeSpan.FromMilliseconds(batchIntervalMs);
             _timer.Tick += (s, e) =>
             {
-                foreach (var canvas in _redrawRequests)
+                CanvasControl[] pendingRedraws = _redrawRequests.ToArray();
+                _redrawRequests.Clear();
+                _timer.Stop();
+
+                foreach (CanvasControl canvas in pendingRedraws)
                 {
                     canvas.Invalidate();
                 }
-                _redrawRequests.Clear();
-                _timer.Stop();
             };
         }
 

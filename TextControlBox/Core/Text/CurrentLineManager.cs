@@ -27,7 +27,9 @@ internal class CurrentLineManager
     }
     public void SetCurrentLineText(string text)
     {
-        textManager.totalLines[CurrentLineIndex < textManager.LinesCount ? CurrentLineIndex : textManager.LinesCount - 1] = text;
+        textManager.SetLineText(
+            CurrentLineIndex < textManager.LinesCount ? CurrentLineIndex : textManager.LinesCount - 1,
+            text);
     }
     public void UpdateCurrentLine(int currentLine)
     {

@@ -7,12 +7,42 @@ using System.Linq;
 using System.Text;
 using TextControlBoxNS;
 using Microsoft.VisualStudio.TestTools.UnitTesting.AppContainer;
+using TextControlBoxNS.Helper;
+using Windows.Foundation;
 
 namespace TextControlBox.Tests;
 
 [TestClass]
 public class HelperTests
 {
+    [TestMethod]
+    public void TextVerticalOffset_AppliesProportionalOpticalCorrection()
+    {
+        float compactOffset = TextLayoutManager.CalculateTextVerticalOffset(14, 2);
+        float expandedOffset = TextLayoutManager.CalculateTextVerticalOffset(14, 10);
+
+        Assert.AreEqual(15.3333f, compactOffset, 0.001f);
+        Assert.AreEqual(5.3333f, expandedOffset - compactOffset, 0.001f);
+    }
+
+    [TestMethod]
+    public void CreateLineAlignedRect_AdjacentRowsSharePixelBoundary()
+    {
+        const float dpiScale = 1.25f;
+        const float top = 4.75f;
+        const float lineHeight = 19;
+
+        Rect first = Utils.CreateLineAlignedRect(0, top, 100, lineHeight, dpiScale);
+        Rect second = Utils.CreateLineAlignedRect(
+            0,
+            top + lineHeight,
+            100,
+            lineHeight,
+            dpiScale);
+
+        Assert.AreEqual(first.Bottom, second.Top, 0.001);
+    }
+
     [UITestMethod]
     public void LineEndings_CleanLineEndings_Works()
     {

@@ -85,7 +85,8 @@ internal sealed class CsvColumnHighlightRule : IHighlightRule
                         Length = tokenLength,
                         ColorLight = GenerateColumnColor(columnIndex, _cycleLength, false),
                         ColorDark = GenerateColumnColor(columnIndex, _cycleLength, true),
-                        Style = _style
+                        Style = _style,
+                        Role = SyntaxHighlightRole.Value,
                     });
                 }
 

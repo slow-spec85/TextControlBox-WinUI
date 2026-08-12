@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.Drawing;
 using System.Text.RegularExpressions;
 using TextControlBoxNS.Extensions;
@@ -11,6 +12,7 @@ namespace TextControlBoxNS;
 /// </summary>
 public class SyntaxHighlights
 {
+    internal static readonly TimeSpan RegexMatchTimeout = TimeSpan.FromMilliseconds(50);
     private readonly ColorConverter ColorConverter = new ColorConverter();
 
     /// <summary>
@@ -22,11 +24,20 @@ public class SyntaxHighlights
     /// <param name="bold">true if the pattern should be displayed in bold font; otherwise, false.</param>
     /// <param name="italic">true if the pattern should be displayed in italic font; otherwise, false.</param>
     /// <param name="underlined">true if the pattern should be displayed with an underline; otherwise, false.</param>
-    public SyntaxHighlights(string pattern, string colorLight, string colorDark, bool bold = false, bool italic = false, bool underlined = false)
+    /// <param name="role">The semantic role used by an optional syntax highlighting palette.</param>
+    public SyntaxHighlights(
+        string pattern,
+        string colorLight,
+        string colorDark,
+        bool bold = false,
+        bool italic = false,
+        bool underlined = false,
+        SyntaxHighlightRole role = SyntaxHighlightRole.Custom)
     {
         this.Pattern = pattern;
         this.ColorDark = colorDark;
         this.ColorLight = colorLight;
+        this.Role = role;
 
         if (underlined || italic || bold)
             this.CodeStyle = new CodeFontStyle(underlined, italic, bold);
@@ -36,6 +47,12 @@ public class SyntaxHighlights
     /// Gets or sets the font style for the pattern.
     /// </summary>
     public CodeFontStyle CodeStyle { get; set; } = null;
+
+    /// <summary>
+    /// Gets the semantic role used to resolve an optional palette override.
+    /// </summary>
+    [JsonIgnore]
+    public SyntaxHighlightRole Role { get; }
 
     /// <summary>
     /// Gets or sets the pattern to be highlighted in the text content.
@@ -78,7 +95,10 @@ public class SyntaxHighlights
     {
         if (!string.IsNullOrEmpty(Pattern))
         {
-            PrecompiledRegex = new Regex(Pattern, RegexOptions.Compiled |RegexOptions.Multiline);
+            PrecompiledRegex = new Regex(
+                Pattern,
+                RegexOptions.Compiled | RegexOptions.Multiline,
+                RegexMatchTimeout);
         }
     }
 }

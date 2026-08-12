@@ -102,7 +102,13 @@ namespace TextControlBoxNS.Core.Text
 
             //Do the Undo
             coreTextbox.ChangeCursor(InputSystemCursorShape.Wait);
-            var(cursor, selection) = undoRedo.Undo(stringManager);
+            (CursorPosition cursor, TextSelection selection) result;
+            using (DocumentChangeBatch batch =
+                textManager.BeginDocumentChangeBatch(DocumentChangeReason.Undo))
+            {
+                result = undoRedo.Undo(stringManager);
+            }
+            var (cursor, selection) = result;
             eventsManager.CallTextChanged();
             coreTextbox.ChangeCursor(InputSystemCursorShape.IBeam);
 
@@ -120,7 +126,13 @@ namespace TextControlBoxNS.Core.Text
 
             //Do the Redo
             coreTextbox.ChangeCursor(InputSystemCursorShape.Wait);
-            var (cursor, selection) = undoRedo.Redo(stringManager);
+            (CursorPosition cursor, TextSelection selection) result;
+            using (DocumentChangeBatch batch =
+                textManager.BeginDocumentChangeBatch(DocumentChangeReason.Redo))
+            {
+                result = undoRedo.Redo(stringManager);
+            }
+            var (cursor, selection) = result;
             eventsManager.CallTextChanged();
             coreTextbox.ChangeCursor(InputSystemCursorShape.IBeam);
 
@@ -245,13 +257,19 @@ namespace TextControlBoxNS.Core.Text
                     return;
                 }
 
+                IList<string> loadedLines = lines as IList<string> ?? new List<string>(lines);
+
                 selectionManager.ClearSelection();
                 undoRedo.ClearAll();
 
-                textManager.ClearText();
-                textManager.totalLines = new Collections.Pooled.PooledList<string>(lines);
-                if (textManager.LinesCount == 0)
-                    textManager.AddLine();
+                using (DocumentChangeBatch batch =
+                    textManager.BeginDocumentChangeBatch(DocumentChangeReason.Load))
+                {
+                    textManager.ClearText();
+                    textManager.InsertOrAddRange(loadedLines, 0);
+                    if (textManager.LinesCount == 0)
+                        textManager.AddLine();
+                }
 
                 textManager.LineEnding = lineEnding;
 
@@ -307,10 +325,14 @@ namespace TextControlBoxNS.Core.Text
 
                 longestLineManager.needsRecalculation = true;
 
-                if (text.Length == 0)
-                    textManager.ClearText(true);
-                else
-                    selectionManager.ReplaceLines(0, textManager.LinesCount, stringManager.CleanUpString(text).Split(textManager.NewLineCharacter));
+                using (DocumentChangeBatch batch =
+                    textManager.BeginDocumentChangeBatch(DocumentChangeReason.Load))
+                {
+                    if (text.Length == 0)
+                        textManager.ClearText(true);
+                    else
+                        selectionManager.ReplaceLines(0, textManager.LinesCount, stringManager.CleanUpString(text).Split(textManager.NewLineCharacter));
+                }
 
                 cursorManager.SetToTextEnd();
 
@@ -524,7 +546,7 @@ namespace TextControlBoxNS.Core.Text
                 if(textManager.LinesCount == 1)
                     textManager.SetLineText(0, "");
                 else
-                    textManager.totalLines.RemoveAt(line);
+                    textManager.DeleteAt(line);
 
             }, line, 1, textManager.LinesCount == 1 ? 1 : 0);
 

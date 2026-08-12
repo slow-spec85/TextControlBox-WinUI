@@ -20,6 +20,8 @@ internal class CanvasUpdateManager
 
     public void UpdateCursor()
     {
+        UpdateBackground();
+
         if (!coreTextbox.canvasCursor.ReadyToDraw)
             return;
 
@@ -48,6 +50,13 @@ internal class CanvasUpdateManager
         //coreTextbox.canvasText.Invalidate();
         _batchRedrawer.RequestRedraw(coreTextbox.canvasText);
     }
+    public void UpdateBackground()
+    {
+        if (!coreTextbox.canvasDecorations.ReadyToDraw)
+            return;
+
+        _batchRedrawer.RequestRedraw(coreTextbox.canvasDecorations);
+    }
     public void UpdateSelection()
     {
         if (!coreTextbox.canvasSelection.ReadyToDraw)
@@ -64,6 +73,12 @@ internal class CanvasUpdateManager
 
         //coreTextbox.canvasLineNumber.Invalidate();
         _batchRedrawer.RequestRedraw(coreTextbox.canvasLineNumber);
+    }
+
+    public void UpdateLineGutter()
+    {
+        coreTextbox.UpdateLineGutterLayout();
+        UpdateBackground();
     }
 
     public void UpdateAll()

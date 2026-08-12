@@ -164,7 +164,7 @@ internal class TabSpaceManager
 
             // Convert indentation to tabs
             string newIndent = ConvertIndentStringToTabs(indent, documentNumberOfSpaces);
-            textManager.totalLines[i] = newIndent + rest;
+            textManager.SetLineText(i, newIndent + rest);
         }
     }
 
@@ -184,7 +184,7 @@ internal class TabSpaceManager
 
             // Convert indentation to spaces
             string newIndent = ConvertIndentStringToSpaces(indent, documentNumberOfSpaces, spacesCount);
-            textManager.totalLines[i] = newIndent + rest;
+            textManager.SetLineText(i, newIndent + rest);
         }
     }
 
@@ -204,7 +204,7 @@ internal class TabSpaceManager
 
             // Convert spaces to different width spaces
             string newIndent = ConvertIndentStringToSpaces(indent, documentNumberOfSpaces, newSpacesCount);
-            textManager.totalLines[i] = newIndent + rest;
+            textManager.SetLineText(i, newIndent + rest);
         }
     }
 

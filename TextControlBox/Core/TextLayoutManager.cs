@@ -9,6 +9,8 @@ namespace TextControlBoxNS.Core;
 
 internal class TextLayoutManager
 {
+    private const float TextVerticalCenterDivisor = 1.5f;
+
     private TextManager textManager;
     private ZoomManager zoomManager;
     public void Init(TextManager textManager, ZoomManager zoomManager)
@@ -16,6 +18,12 @@ internal class TextLayoutManager
         this.textManager = textManager;
         this.zoomManager = zoomManager;
     }
+
+    public float LineHeight => zoomManager.ZoomedFontSize + textManager._LineSpacing;
+
+    public float TextVerticalOffset => CalculateTextVerticalOffset(
+        zoomManager.ZoomedFontSize,
+        textManager._LineSpacing);
 
     public CanvasTextLayout CreateTextResource(ICanvasResourceCreatorWithDpi resourceCreator, CanvasTextLayout textLayout, CanvasTextFormat textFormat, string text, Size targetSize)
     {
@@ -29,7 +37,7 @@ internal class TextLayoutManager
     }
     public CanvasTextFormat CreateCanvasTextFormat()
     {
-        return CreateCanvasTextFormat(zoomManager.ZoomedFontSize, zoomManager.ZoomedFontSize + 2, textManager._FontFamily);
+        return CreateCanvasTextFormat(zoomManager.ZoomedFontSize, LineHeight, textManager._FontFamily);
     }
 
     public CanvasTextFormat CreateCanvasTextFormat(float zoomedFontSize, float lineSpacing, FontFamily fontFamily)
@@ -40,6 +48,7 @@ internal class TextLayoutManager
             HorizontalAlignment = CanvasHorizontalAlignment.Left,
             VerticalAlignment = CanvasVerticalAlignment.Top,
             WordWrapping = CanvasWordWrapping.NoWrap,
+            LineSpacingMode = CanvasLineSpacingMode.Default,
             LineSpacing = lineSpacing,
         };
         textFormat.IncrementalTabStop = (float)Math.Round(zoomedFontSize * 3f); //default 137px
@@ -58,18 +67,17 @@ internal class TextLayoutManager
     }
     public CanvasTextFormat CreateLinenumberTextFormat()
     {
-        CanvasTextFormat textFormat = new CanvasTextFormat()
-        {
-            FontSize = zoomManager.ZoomedFontSize,
-            HorizontalAlignment = CanvasHorizontalAlignment.Right,
-            VerticalAlignment = CanvasVerticalAlignment.Top,
-            WordWrapping = CanvasWordWrapping.NoWrap,
-            LineSpacing = zoomManager.ZoomedFontSize + 2,
-        };
-        textFormat.FontFamily = textManager._FontFamily.Source;
-        textFormat.TrimmingGranularity = CanvasTextTrimmingGranularity.None;
-        textFormat.TrimmingSign = CanvasTrimmingSign.None;
+        CanvasTextFormat textFormat = CreateCanvasTextFormat(
+            zoomManager.ZoomedFontSize,
+            LineHeight,
+            textManager._FontFamily);
+        textFormat.HorizontalAlignment = CanvasHorizontalAlignment.Right;
         return textFormat;
+    }
+
+    internal static float CalculateTextVerticalOffset(float fontSize, float additionalLineSpacing)
+    {
+        return fontSize + (additionalLineSpacing / TextVerticalCenterDivisor);
     }
 
     public (CanvasTextLayout spaceGlyph, CanvasTextLayout tabGlyph) CreateGlyphs(ICanvasResourceCreator resourceCreator, CanvasTextFormat textFormat)

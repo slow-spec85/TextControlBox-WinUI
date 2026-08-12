@@ -21,6 +21,7 @@ namespace TextControlBoxNS.Core.Text
 
         public bool EnableCombineNextUndoItems = false;
         private bool _isGroupingActions = false;
+        private DocumentChangeBatch actionGroupDocumentBatch;
 
         private bool _UndoRedoEnabled = true;
         public bool UndoRedoEnabled
@@ -48,35 +49,34 @@ namespace TextControlBoxNS.Core.Text
 
         public void BeginActionGroup()
         {
-            if (!UndoRedoEnabled)
+            if (actionGroupDocumentBatch is not null)
                 return;
 
-            _isGroupingActions = true;
+            actionGroupDocumentBatch = textManager.BeginDocumentChangeBatch(DocumentChangeReason.Edit);
+            _isGroupingActions = UndoRedoEnabled;
         }
 
         public void EndActionGroup()
         {
-            if (!UndoRedoEnabled)
+            if (actionGroupDocumentBatch is null)
                 return;
 
             _isGroupingActions = false;
 
-            if (UndoStack.Count > 0)
+            if (UndoRedoEnabled && UndoStack.Count > 0)
             {
                 var lastItem = UndoStack.Pop();
                 lastItem.HandleNextItemToo = false;
                 UndoStack.Push(lastItem);
             }
+
+            actionGroupDocumentBatch.Dispose();
+            actionGroupDocumentBatch = null;
         }
 
         public void ExecuteActionGroup(Action actionGroup)
         {
-            if (!UndoRedoEnabled)
-            {
-                actionGroup.Invoke();
-                return;
-            }
-
+            bool ownsActionGroup = actionGroupDocumentBatch is null;
             BeginActionGroup();
             try
             {
@@ -84,8 +84,16 @@ namespace TextControlBoxNS.Core.Text
             }
             finally
             {
-                EndActionGroup();
+                if (ownsActionGroup)
+                    EndActionGroup();
             }
+        }
+
+        private void ApplyEdit(Action action)
+        {
+            using DocumentChangeBatch batch =
+                textManager.BeginDocumentChangeBatch(DocumentChangeReason.Edit);
+            action.Invoke();
         }
 
         private void RecordRedo(UndoRedoItem item)
@@ -127,13 +135,13 @@ namespace TextControlBoxNS.Core.Text
         {
             if (!UndoRedoEnabled)
             {
-                action.Invoke();
+                ApplyEdit(action);
                 return;
             }
 
             var cursorBefore = new CursorPosition(cursorManager.currentCursorPosition);
             var lineBefore = textManager.GetLineText(startline);
-            action.Invoke();
+            ApplyEdit(action);
             selectionManager.ClearSelection();
 
             var lineAfter = textManager.GetLineText(startline);
@@ -149,7 +157,7 @@ namespace TextControlBoxNS.Core.Text
         {
             if (!UndoRedoEnabled || startline < 0)
             {
-                action.Invoke();
+                ApplyEdit(action);
                 return;
             }
 
@@ -162,7 +170,7 @@ namespace TextControlBoxNS.Core.Text
             undocount = Math.Min(undocount, textManager.LinesCount - startline);
             var linesBefore = textManager.GetLinesAsString(startline, undocount);
 
-            action.Invoke();
+            ApplyEdit(action);
 
             redoCount = Math.Min(redoCount, textManager.LinesCount - startline);
             var linesAfter = textManager.GetLinesAsString(startline, redoCount);
@@ -189,13 +197,13 @@ namespace TextControlBoxNS.Core.Text
         {
             if (!UndoRedoEnabled)
             {
-                action.Invoke();
+                ApplyEdit(action);
                 return;
             }
             var orderedSel = SelectionHelper.OrderTextSelectionSeparated(selection);
             if (orderedSel.startLine < 0)
             {
-                action.Invoke();
+                ApplyEdit(action);
                 return;
             }
 
@@ -203,7 +211,7 @@ namespace TextControlBoxNS.Core.Text
             var selectionBefore = new TextSelection(selection);
             var linesBefore = textManager.GetLinesAsString(orderedSel.startLine, numberOfAddedRemovedLines);
 
-            action.Invoke();
+            ApplyEdit(action);
 
             var linesAfter = textManager.GetLinesAsString(orderedSel.startLine, numberOfAddedRemovedLines);
             var selectionAfter = new TextSelection(selection);
@@ -229,14 +237,14 @@ namespace TextControlBoxNS.Core.Text
         {
             if (!UndoRedoEnabled)
             {
-                action.Invoke();
+                ApplyEdit(action);
                 return;
             }
 
             var orderedSel = SelectionHelper.OrderTextSelectionSeparated(selection);
             if(orderedSel.startLine < 0)
             {
-                action.Invoke();
+                ApplyEdit(action);
                 return;
             }
 
@@ -246,7 +254,7 @@ namespace TextControlBoxNS.Core.Text
             var cursorBefore = new CursorPosition(cursorManager.currentCursorPosition);
             var selectionBefore = new TextSelection(selection);
             var linesBefore = textManager.GetLinesAsString(orderedSel.startLine, numberOfRemovedLines);
-            action.Invoke();
+            ApplyEdit(action);
 
             var linesAfter = textManager.GetLinesAsString(orderedSel.startLine, numberOfAddedLines);
             var selectionAfter = new TextSelection(selection);

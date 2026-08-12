@@ -1,6 +1,7 @@
 ﻿using Microsoft.Graphics.Canvas.Brushes;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using TextControlBoxNS.Core.Selection;
+using TextControlBoxNS.Helper;
 
 namespace TextControlBoxNS.Core.Renderer;
 
@@ -8,20 +9,27 @@ internal class LineHighlighterRenderer
 {
     private LineHighlighterManager lineHighlighterManager;
     private SelectionManager selectionManager;
-    private TextRenderer textRenderer;
-    public void Init(LineHighlighterManager lineHighlighterManager, SelectionManager selectionManager, TextRenderer textRenderer)
+    public void Init(LineHighlighterManager lineHighlighterManager, SelectionManager selectionManager)
     {
         this.selectionManager = selectionManager;
         this.lineHighlighterManager = lineHighlighterManager;
-        this.textRenderer = textRenderer;
     }
 
-    public void Render(float canvasWidth, float y, float fontSize, CanvasDrawEventArgs args, CanvasSolidColorBrush backgroundBrush)
+    public void Render(
+        float canvasWidth,
+        float y,
+        float lineHeight,
+        float dpiScale,
+        CanvasDrawEventArgs args,
+        CanvasSolidColorBrush backgroundBrush,
+        float x = 0)
     {
-        if (textRenderer.CurrentLineTextLayout == null)
+        if (backgroundBrush == null)
             return;
 
-        args.DrawingSession.FillRectangle(0, y, canvasWidth, fontSize, backgroundBrush);
+        args.DrawingSession.FillRectangle(
+            Utils.CreateLineAlignedRect(x, y, canvasWidth, lineHeight, dpiScale),
+            backgroundBrush);
     }
 
     public bool CanRender(FocusManager focusManager)

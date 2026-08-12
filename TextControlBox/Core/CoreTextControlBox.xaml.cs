@@ -45,10 +45,19 @@ internal sealed partial class CoreTextControlBox : UserControl
     public readonly LineHighlighterManager lineHighlighterManager;
     public readonly LineNumberManager lineNumberManager;
     public readonly EventsManager eventsManager;
+    public readonly DocumentChangeManager documentChangeManager;
+    public readonly StatefulSyntaxHighlightingManager statefulSyntaxHighlightingManager;
+    public readonly SyntaxHighlightingSession syntaxHighlightingSession;
     public readonly FocusManager focusManager;
     public readonly PointerActionsManager pointerActionsManager;
     public readonly TextLayoutManager textLayoutManager;
     public readonly LineHighlighterRenderer lineHighlighterRenderer;
+    public readonly EditorBackgroundRenderer editorBackgroundRenderer;
+    public readonly LineDecorationStore lineDecorationStore;
+    public readonly LineGutterDecorationStore lineGutterDecorationStore;
+    public readonly LineGutterRenderer lineGutterRenderer;
+    public readonly TextDecorationStore textDecorationStore;
+    public readonly TextDecorationRenderer textDecorationRenderer;
     public readonly AutoIndentionManager autoIndentionManager;
     public readonly ReplaceManager replaceManager;
     public readonly InitializationManager initializationManager;
@@ -59,6 +68,7 @@ internal sealed partial class CoreTextControlBox : UserControl
     private readonly LinkRenderer linkRenderer;
 
     public CanvasControl canvasText;
+    public CanvasControl canvasDecorations;
     public CanvasControl canvasCursor;
     public CanvasControl canvasSelection;
     public CanvasControl canvasLineNumber;
@@ -72,6 +82,7 @@ internal sealed partial class CoreTextControlBox : UserControl
         this.InitializeComponent();
 
         canvasText = Canvas_Text;
+        canvasDecorations = Canvas_Decorations;
         canvasCursor = Canvas_Cursor;
         canvasSelection = Canvas_Selection;
         canvasLineNumber = Canvas_LineNumber;
@@ -102,12 +113,21 @@ internal sealed partial class CoreTextControlBox : UserControl
         lineNumberManager = new LineNumberManager();
         searchManager = new SearchManager();
         eventsManager = new EventsManager();
+        documentChangeManager = new DocumentChangeManager();
+        statefulSyntaxHighlightingManager = new StatefulSyntaxHighlightingManager();
+        syntaxHighlightingSession = new SyntaxHighlightingSession();
         lineNumberRenderer = new LineNumberRenderer();
         zoomManager = new ZoomManager();
         focusManager = new FocusManager();
         pointerActionsManager = new PointerActionsManager();
         textLayoutManager = new TextLayoutManager();
         lineHighlighterRenderer = new LineHighlighterRenderer();
+        editorBackgroundRenderer = new EditorBackgroundRenderer();
+        lineDecorationStore = new LineDecorationStore();
+        lineGutterDecorationStore = new LineGutterDecorationStore();
+        lineGutterRenderer = new LineGutterRenderer();
+        textDecorationStore = new TextDecorationStore();
+        textDecorationRenderer = new TextDecorationRenderer();
         autoIndentionManager = new AutoIndentionManager();
         replaceManager = new ReplaceManager();
         initializationManager = new InitializationManager();
@@ -117,19 +137,38 @@ internal sealed partial class CoreTextControlBox : UserControl
         linkHighlightManager = new LinkHighlightManager();
         linkRenderer = new LinkRenderer();
 
-        textManager.Init(eventsManager);
+        documentChangeManager.Init(eventsManager);
+        textManager.Init(
+            eventsManager,
+            lineDecorationStore,
+            textDecorationStore,
+            documentChangeManager);
+        statefulSyntaxHighlightingManager.Init(
+            textManager,
+            eventsManager,
+            syntaxHighlightingSession);
         stringManager.Init(textManager, tabSpaceManager);
-        lineHighlighterRenderer.Init(lineHighlighterManager, selectionManager, textRenderer);
+        lineHighlighterRenderer.Init(lineHighlighterManager, selectionManager);
         cursorManager.Init(textManager, currentLineManager);
         selectionManager.Init(textManager, cursorManager, eventsManager);
         undoRedo.Init(textManager, selectionManager, cursorManager, eventsManager, tabSpaceManager);
         selectionRenderer.Init(selectionManager, textRenderer, eventsManager, scrollManager, zoomManager, designHelper, textManager);
         flyoutHelper.Init(this);
         canvasUpdateManager.Init(this);
+        lineDecorationStore.Init(canvasUpdateManager.UpdateBackground);
+        lineGutterDecorationStore.Init(canvasUpdateManager.UpdateLineGutter);
+        textDecorationStore.Init(
+            canvasUpdateManager.UpdateBackground,
+            () =>
+            {
+                textRenderer.NeedsUpdateTextLayout = true;
+                canvasUpdateManager.UpdateText();
+            });
+        textDecorationRenderer.Init(textDecorationStore, textManager, scrollManager);
         caretBlinkManager.Init(canvasUpdateManager);
         textActionManager.Init(this, textRenderer, undoRedo, currentLineManager, longestLineManager, canvasUpdateManager, textManager, selectionRenderer, cursorManager, scrollManager, eventsManager, stringManager, selectionManager, autoIndentionManager);
-        textRenderer.Init(cursorManager, designHelper, textLayoutManager, textManager, scrollManager, lineNumberRenderer, longestLineManager, this, searchManager, canvasUpdateManager, zoomManager, invisibleCharactersRenderer, linkRenderer, linkHighlightManager);
-        cursorRenderer.Init(cursorManager, currentLineManager, textRenderer, focusManager, textManager, scrollManager, zoomManager, designHelper, lineHighlighterRenderer, eventsManager, longestLineManager, caretBlinkManager);
+        textRenderer.Init(cursorManager, designHelper, textLayoutManager, textManager, scrollManager, lineNumberRenderer, longestLineManager, this, searchManager, canvasUpdateManager, zoomManager, invisibleCharactersRenderer, linkRenderer, linkHighlightManager, statefulSyntaxHighlightingManager, textDecorationRenderer);
+        cursorRenderer.Init(cursorManager, currentLineManager, textRenderer, focusManager, textManager, scrollManager, designHelper, eventsManager, longestLineManager, caretBlinkManager);
         scrollManager.Init(this, canvasUpdateManager, textManager, textRenderer, cursorManager, zoomManager, VerticalScrollbar, HorizontalScrollbar);
         currentLineManager.Init(cursorManager, textManager);
         longestLineManager.Init(selectionManager, textManager, textRenderer);
@@ -137,11 +176,22 @@ internal sealed partial class CoreTextControlBox : UserControl
         tabSpaceManager.Init(textManager, selectionManager, cursorManager, textActionManager, undoRedo, longestLineManager, eventsManager);
         searchManager.Init(textManager);
         eventsManager.Init(searchManager, cursorManager);
-        lineNumberRenderer.Init(textManager, textLayoutManager, textRenderer, designHelper, lineNumberManager);
+        lineNumberRenderer.Init(
+            textManager,
+            textLayoutManager,
+            textRenderer,
+            designHelper,
+            lineNumberManager,
+            scrollManager);
         zoomManager.Init(textManager, textRenderer, canvasUpdateManager, eventsManager, lineNumberRenderer);
         focusManager.Init(this, canvasUpdateManager, inputHandler, eventsManager);
         pointerActionsManager.Init(this, textRenderer, textManager, cursorManager, canvasUpdateManager, scrollManager, selectionRenderer, currentLineManager, selectionManager, linkHighlightManager);
         textLayoutManager.Init(textManager, zoomManager);
+        lineGutterRenderer.Init(
+            lineGutterDecorationStore,
+            textManager,
+            textLayoutManager,
+            zoomManager);
         autoIndentionManager.Init(textManager, tabSpaceManager);
         replaceManager.Init(canvasUpdateManager, undoRedo, textManager, searchManager, cursorManager, textActionManager, selectionRenderer, selectionManager, eventsManager);
         initializationManager.Init(eventsManager);
@@ -149,6 +199,7 @@ internal sealed partial class CoreTextControlBox : UserControl
         invisibleCharactersRenderer.Init(designHelper, scrollManager, zoomManager, textLayoutManager, whitespaceCharactersManager);
         linkHighlightManager.Init(textRenderer, this, eventsManager);
         linkRenderer.Init(textRenderer, linkHighlightManager);
+        editorBackgroundRenderer.Init(lineDecorationStore, lineGutterRenderer, textDecorationRenderer, textRenderer, lineHighlighterRenderer, textManager, cursorManager, scrollManager, zoomManager, focusManager, designHelper);
     }
 
     public void InitialiseOnStart()
@@ -263,7 +314,7 @@ internal sealed partial class CoreTextControlBox : UserControl
 
         if (menu)
         {
-            if (!IsReadOnly && (e.Key == VirtualKey.Down || e.Key == VirtualKey.Up ))
+            if (!IsReadOnly && (e.Key == VirtualKey.Down || e.Key == VirtualKey.Up))
             {
                 moveLineManager.Move(e.Key == VirtualKey.Down ? LineMoveDirection.Down : LineMoveDirection.Up);
 
@@ -489,8 +540,8 @@ internal sealed partial class CoreTextControlBox : UserControl
 
         //Select the line where the cursor is over
         int line = CursorHelper.GetCursorLineFromPoint(textRenderer, point.Position);
-        
-        if(textManager.LinesCount > 0)
+
+        if (textManager.LinesCount > 0)
         {
             line = Math.Clamp(line, 0, textManager.LinesCount - 1);
         }
@@ -520,6 +571,18 @@ internal sealed partial class CoreTextControlBox : UserControl
     // index momentarily disagree and CanvasTextLayout.GetCharacterRegions throws E_INVALIDARG).
     // Guarding each draw handler turns the worst case into a single skipped frame (the canvas
     // redraws on the next invalidation) instead of a crash.
+    private void Canvas_Decorations_Draw(CanvasControl sender, CanvasDrawEventArgs args)
+    {
+        try
+        {
+            editorBackgroundRenderer.Draw(sender, args, (float)LineGutterColumn.ActualWidth);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"TextControlBox: Canvas_Decorations_Draw failed: {ex}");
+        }
+    }
+
     private void Canvas_Text_Draw(CanvasControl sender, CanvasDrawEventArgs args)
     {
         try
@@ -562,7 +625,7 @@ internal sealed partial class CoreTextControlBox : UserControl
         {
             if (!lineNumberManager._ShowLineNumbers)
             {
-                lineNumberRenderer.HideLineNumbers(sender, lineNumberManager._SpaceBetweenLineNumberAndText);
+                lineNumberRenderer.HideLineNumbers(sender);
                 return;
             }
 
@@ -573,7 +636,6 @@ internal sealed partial class CoreTextControlBox : UserControl
             System.Diagnostics.Debug.WriteLine($"TextControlBox: Canvas_LineNumber_Draw failed: {ex}");
         }
     }
-
     //Focus:
     private void UserControl_LosingFocus(UIElement sender, LosingFocusEventArgs args)
     {
@@ -588,6 +650,18 @@ internal sealed partial class CoreTextControlBox : UserControl
     private void UserControl_Tapped(object sender, TappedRoutedEventArgs e)
     {
         this.Focus(FocusState.Programmatic);
+    }
+    private void RightGutterPresenter_Tapped(object sender, TappedRoutedEventArgs e)
+    {
+        e.Handled = true;
+    }
+    private void RightGutterPresenter_PointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        ChangeCursor(InputSystemCursorShape.Arrow);
+    }
+    private void RightGutterPresenter_PointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        ChangeCursor(InputSystemCursorShape.IBeam);
     }
     private void InputManager_GotFocus(object sender, RoutedEventArgs e)
     {
@@ -836,6 +910,81 @@ internal sealed partial class CoreTextControlBox : UserControl
         return textManager.GetLinesAsString(startLine, length);
     }
 
+    public void SetLineDecorations(string groupKey, IEnumerable<LineDecoration> decorations)
+    {
+        lineDecorationStore.SetGroup(groupKey, decorations, textManager.LinesCount);
+    }
+
+    public bool RemoveLineDecorations(string groupKey)
+    {
+        return lineDecorationStore.RemoveGroup(groupKey);
+    }
+
+    public void ClearLineDecorations()
+    {
+        lineDecorationStore.Clear();
+    }
+
+    public void SetLineGutterDecorations(
+        string groupKey,
+        IEnumerable<LineGutterDecoration> decorations)
+    {
+        lineGutterDecorationStore.SetGroup(groupKey, decorations, textManager.LinesCount);
+    }
+
+    public bool RemoveLineGutterDecorations(string groupKey)
+    {
+        return lineGutterDecorationStore.RemoveGroup(groupKey);
+    }
+
+    public void ClearLineGutterDecorations()
+    {
+        lineGutterDecorationStore.Clear();
+    }
+
+    public void SetLineNumberLabels(IEnumerable<string> labels)
+    {
+        lineNumberManager.SetCustomLabels(labels);
+        UpdateLineNumberCanvasVisibility();
+        lineNumberRenderer.NeedsUpdateLineNumbers();
+        canvasUpdateManager.UpdateLineNumbers();
+    }
+
+    public void ClearLineNumberLabels()
+    {
+        lineNumberManager.ClearCustomLabels();
+        UpdateLineNumberCanvasVisibility();
+        lineNumberRenderer.NeedsUpdateLineNumbers();
+        canvasUpdateManager.UpdateLineNumbers();
+    }
+
+    private void UpdateLineNumberCanvasVisibility()
+    {
+        bool hasVisibleLabels = lineNumberManager
+            .GetWidthReference(textManager.LinesCount)
+            .Length > 0;
+        Canvas_LineNumber.Visibility = lineNumberManager._ShowLineNumbers && hasVisibleLabels
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+    }
+
+    public void SetTextDecorations(
+        string groupKey,
+        IEnumerable<TextRangeDecoration> decorations)
+    {
+        textDecorationStore.SetGroup(groupKey, decorations, textManager);
+    }
+
+    public bool RemoveTextDecorations(string groupKey)
+    {
+        return textDecorationStore.RemoveGroup(groupKey);
+    }
+
+    public void ClearTextDecorations()
+    {
+        textDecorationStore.Clear();
+    }
+
     public bool SetLineText(int line, string text)
     {
         return textActionManager.SetLineText(line, text);
@@ -864,7 +1013,7 @@ internal sealed partial class CoreTextControlBox : UserControl
     {
         if (selectionManager.HasSelection)
         {
-            if(stringManager.HasMultilineCharacters(text1) || stringManager.HasMultilineCharacters(text2))
+            if (stringManager.HasMultilineCharacters(text1) || stringManager.HasMultilineCharacters(text2))
                 throw new ArgumentException(
                     "The text contains multiline characters, which are not allowed.");
 
@@ -976,6 +1125,7 @@ internal sealed partial class CoreTextControlBox : UserControl
 
         textRenderer.CheckDispose();
         lineNumberRenderer.CheckDispose();
+        lineGutterRenderer.CheckDispose();
 
         //Dispose and null larger objects
         textManager.totalLines.Dispose();
@@ -1078,6 +1228,23 @@ internal sealed partial class CoreTextControlBox : UserControl
             if (textManager._SyntaxHighlighting != null)
                 textManager._SyntaxHighlighting.CompileAllRegex();
 
+            syntaxHighlightingSession.ResetRules();
+            statefulSyntaxHighlightingManager.Reset(value);
+
+            textRenderer.NeedsUpdateTextLayout = true;
+            canvasUpdateManager.UpdateText();
+        }
+    }
+
+    public SyntaxHighlightPalette SyntaxHighlightPalette
+    {
+        get => syntaxHighlightingSession.Palette;
+        set
+        {
+            if (ReferenceEquals(syntaxHighlightingSession.Palette, value))
+                return;
+
+            syntaxHighlightingSession.Palette = value;
             textRenderer.NeedsUpdateTextLayout = true;
             canvasUpdateManager.UpdateText();
         }
@@ -1100,6 +1267,25 @@ internal sealed partial class CoreTextControlBox : UserControl
     public new FontFamily FontFamily { get => textManager._FontFamily; set { textManager._FontFamily = value; textRenderer.NeedsTextFormatUpdate = true; canvasUpdateManager.UpdateAll(); } }
 
     public new int FontSize { get => textManager._FontSize; set { textManager._FontSize = value; zoomManager.UpdateZoom(); } }
+
+    public float LineSpacing
+    {
+        get => textManager._LineSpacing;
+        set
+        {
+            if (float.IsNaN(value) || float.IsInfinity(value) || value < 0)
+                throw new ArgumentOutOfRangeException(nameof(value), "Line spacing must be a finite, non-negative value.");
+
+            if (textManager._LineSpacing.Equals(value))
+                return;
+
+            textManager._LineSpacing = value;
+            textRenderer.NeedsTextFormatUpdate = true;
+            textRenderer.NeedsUpdateTextLayout = true;
+            lineNumberRenderer.NeedsUpdateLineNumbers();
+            canvasUpdateManager.UpdateAll();
+        }
+    }
 
     public float RenderedFontSize => zoomManager.ZoomedFontSize;
 
@@ -1137,9 +1323,14 @@ internal sealed partial class CoreTextControlBox : UserControl
         get => lineNumberManager._ShowLineNumbers;
         set
         {
+            if (lineNumberManager._ShowLineNumbers == value)
+                return;
+
             lineNumberManager._ShowLineNumbers = value;
+            UpdateLineNumberCanvasVisibility();
             textRenderer.NeedsUpdateTextLayout = true;
             lineNumberRenderer.NeedsUpdateLineNumbers();
+            canvasUpdateManager.UpdateLineNumbers();
             canvasUpdateManager.UpdateAll();
         }
     }
@@ -1147,7 +1338,7 @@ internal sealed partial class CoreTextControlBox : UserControl
     public bool ShowLineHighlighter
     {
         get => lineHighlighterManager._ShowLineHighlighter;
-        set { lineHighlighterManager._ShowLineHighlighter = value; canvasUpdateManager.UpdateCursor(); }
+        set { lineHighlighterManager._ShowLineHighlighter = value; canvasUpdateManager.UpdateBackground(); }
     }
 
     public int ZoomFactor { get => zoomManager._ZoomFactor; set { zoomManager._ZoomFactor = value; zoomManager.UpdateZoom(); } } //%
@@ -1229,11 +1420,57 @@ internal sealed partial class CoreTextControlBox : UserControl
     public bool ShowWhitespaceCharacters { get => whitespaceCharactersManager.ShowWhitespaceCharacters; set { whitespaceCharactersManager.ShowWhitespaceCharacters = value; canvasUpdateManager.UpdateText(); } }
     public Thickness SelectionScrollStartBorderDistance { get; set; } = new Thickness(0, 0, 0, 0);
     public bool HighlightLinks { get => linkHighlightManager.HighlightLinks; set { linkHighlightManager.HighlightLinks = value; canvasUpdateManager.UpdateAll(); } }
-    public bool HighlightLineWhenNotFocused { get => lineHighlighterManager._HighlightLineWhenNotFocused; set { lineHighlighterManager._HighlightLineWhenNotFocused = value; canvasUpdateManager.UpdateText(); } }
+    public bool HighlightLineWhenNotFocused { get => lineHighlighterManager._HighlightLineWhenNotFocused; set { lineHighlighterManager._HighlightLineWhenNotFocused = value; canvasUpdateManager.UpdateBackground(); } }
     public bool CanUndo => undoRedo.CanUndo;
     public bool CanRedo => undoRedo.CanRedo;
 
     public float ActualLineHeight => textRenderer.SingleLineHeight;
+
+    public bool ShowLineGutter
+    {
+        get => _showLineGutter;
+        set
+        {
+            if (_showLineGutter == value)
+                return;
+
+            _showLineGutter = value;
+            canvasUpdateManager.UpdateLineGutter();
+        }
+    }
+
+    public double LineGutterWidth
+    {
+        get => _lineGutterWidth;
+        set
+        {
+            if (!double.IsFinite(value) || value < 0)
+                throw new ArgumentOutOfRangeException(nameof(value));
+
+            if (_lineGutterWidth.Equals(value))
+                return;
+
+            _lineGutterWidth = value;
+            canvasUpdateManager.UpdateLineGutter();
+        }
+    }
+
+    internal void UpdateLineGutterLayout()
+    {
+        double width = ShowLineGutter && lineGutterDecorationStore.HasDecorations
+            ? LineGutterWidth
+            : 0;
+        LineGutterColumn.Width = new GridLength(width);
+    }
+
+    public object RightGutterContent
+    {
+        get => RightGutterPresenter.Content;
+        set => RightGutterPresenter.Content = value;
+    }
+
+    private bool _showLineGutter = true;
+    private double _lineGutterWidth = 24;
 
     public static readonly Dictionary<SyntaxHighlightID, SyntaxHighlightLanguage> SyntaxHighlightings =
         new Dictionary<SyntaxHighlightID, SyntaxHighlightLanguage>()

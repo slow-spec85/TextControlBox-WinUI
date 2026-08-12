@@ -1,4 +1,6 @@
 ﻿
+using TextControlBoxNS.Models;
+
 namespace TextControlBoxNS.Core;
 
 internal class EventsManager
@@ -11,6 +13,9 @@ internal class EventsManager
 
     public delegate void TextChangedEvent();
     public event TextChangedEvent TextChanged;
+
+    public delegate void DocumentChangedEvent(DocumentChangedEventArgs args);
+    public event DocumentChangedEvent DocumentChanged;
 
     public delegate void SelectionChangedEvent(SelectionChangedEventHandler args);
     public event SelectionChangedEvent SelectionChanged;
@@ -55,6 +60,11 @@ internal class EventsManager
             searchManager.UpdateSearchLines();
 
         TextChanged?.Invoke();
+    }
+
+    public void CallDocumentChanged(DocumentChangedEventArgs args)
+    {
+        DocumentChanged?.Invoke(args);
     }
 
     public void CallSelectionChanged()

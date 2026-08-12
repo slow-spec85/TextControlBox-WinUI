@@ -12,11 +12,17 @@ namespace TextControlBoxNS.Core.Text;
 
 internal class TextManager
 {
+    public const float DefaultLineSpacing = 2;
+
     private EventsManager eventsManager;
+    private LineDecorationStore lineDecorationStore;
+    private TextDecorationStore textDecorationStore;
+    private DocumentChangeManager documentChangeManager;
 
     public PooledList<string> totalLines = new PooledList<string>(0);
 
     public int _FontSize = 18;
+    public float _LineSpacing = DefaultLineSpacing;
     private LineEnding _LineEnding = LineEnding.CRLF;
     public LineEnding LineEnding 
     { 
@@ -29,9 +35,21 @@ internal class TextManager
         }
     }
 
-    public void Init(EventsManager eventsManager)
+    public void Init(
+        EventsManager eventsManager,
+        LineDecorationStore decorations,
+        TextDecorationStore textDecorations,
+        DocumentChangeManager documentChanges)
     {
         this.eventsManager = eventsManager;
+        lineDecorationStore = decorations;
+        textDecorationStore = textDecorations;
+        documentChangeManager = documentChanges;
+    }
+
+    public DocumentChangeBatch BeginDocumentChangeBatch(DocumentChangeReason reason)
+    {
+        return documentChangeManager.BeginBatch(reason);
     }
 
     public FontFamily _FontFamily = new FontFamily("Consolas");
@@ -89,32 +107,45 @@ internal class TextManager
             return new LineSliceResult(string.Empty, ReadOnlySpan<string>.Empty);
 
         ReadOnlySpan<string> linesSlice = totalLines.Span.Slice(start, count);
-        string joinedText = string.Join(NewLineCharacter, linesSlice);
+        string joinedText = JoinLines(start, count);
 
         return new LineSliceResult(joinedText, linesSlice);
     }
 
     public void SetLineText(int line, string text)
     {
-        //-1 is the last line:
+        int actualLine = line;
+        // -1 is the last line.
         if (line == -1)
-        {
-            totalLines[^1] = text;
-            return;
-        }
+            actualLine = totalLines.Count - 1;
 
-        if (line >= totalLines.Count || line < 0)
+        if (actualLine >= totalLines.Count || actualLine < 0)
             throw new IndexOutOfRangeException("SetLineText provided line index out of range of valid values.");
 
-        totalLines.Span[line] = text;
+        if (totalLines.Span[actualLine].Equals(text, StringComparison.Ordinal))
+            return;
+
+        totalLines.Span[actualLine] = text;
+        textDecorationStore.OnLineTextChanged(actualLine, text.Length);
+        documentChangeManager.RecordChange(actualLine, 1, 1);
     }
     public void String_AddToEnd(int line, string add)
     {
+        if (add.Length == 0)
+            return;
+
         totalLines.Span[line] += add;
+        textDecorationStore.OnLineTextChanged(line, totalLines.Span[line].Length);
+        documentChangeManager.RecordChange(line, 1, 1);
     }
     public void String_AddToStart(int line, string add)
     {
+        if (add.Length == 0)
+            return;
+
         totalLines[line] = add + totalLines[line];
+        textDecorationStore.OnLineTextChanged(line, totalLines.Span[line].Length);
+        documentChangeManager.RecordChange(line, 1, 1);
     }
 
     public void DeleteAt(int index)
@@ -122,34 +153,65 @@ internal class TextManager
         if (index >= totalLines.Count || index < 0)
             throw new IndexOutOfRangeException("DeleteAt: provided index is out of range");
         totalLines.RemoveAt(index);
+        lineDecorationStore.OnLinesRemoved(index, 1);
+        textDecorationStore.OnLinesRemoved(index, 1);
+        documentChangeManager.RecordChange(index, 1, 0);
     }
 
     public void InsertOrAddRange(IEnumerable<string> lines, int index)
     {
+        var lineList = lines as IList<string> ?? lines.ToList();
+        if (lineList.Count == 0)
+            return;
+
+        int insertionIndex;
         if (index >= totalLines.Count)
-            totalLines.AddRange(lines);
+        {
+            insertionIndex = totalLines.Count;
+            totalLines.AddRange(lineList);
+        }
         else
         {
-            var lineList = lines as IList<string> ?? lines.ToList();
+            insertionIndex = index < 0 ? 0 : index;
             totalLines.Capacity = Math.Max(totalLines.Count + lineList.Count, totalLines.Capacity);
-            totalLines.InsertRange(index < 0 ? 0 : index, lineList);
+            totalLines.InsertRange(insertionIndex, lineList);
         }
+
+        lineDecorationStore.OnLinesInserted(insertionIndex, lineList.Count);
+        textDecorationStore.OnLinesInserted(insertionIndex, lineList.Count);
+        documentChangeManager.RecordChange(insertionIndex, 0, lineList.Count);
     }
     public void InsertOrAdd(int index, string lineText)
     {
+        int insertionIndex;
         if (index >= totalLines.Count || index == -1)
+        {
+            insertionIndex = totalLines.Count;
             totalLines.Add(lineText);
+        }
         else
+        {
+            insertionIndex = index;
             totalLines.Insert(index, lineText);
+        }
+
+        lineDecorationStore.OnLinesInserted(insertionIndex, 1);
+        textDecorationStore.OnLinesInserted(insertionIndex, 1);
+        documentChangeManager.RecordChange(insertionIndex, 0, 1);
     }
 
     public void ClearText(bool addNewLine = false)
     {
+        int removedLineCount = totalLines.Count;
         totalLines.Clear();
         ListHelper.GCList(totalLines);
+        lineDecorationStore.Clear();
+        textDecorationStore.Clear();
 
         if (addNewLine)
             totalLines.Add("");
+
+        documentChangeManager.RecordChange(0, removedLineCount, addNewLine ? 1 : 0);
     }
     public void CleanUp()
     {
@@ -163,6 +225,9 @@ internal class TextManager
 
         totalLines.RemoveRange(index, count);
         totalLines.TrimExcess();
+        lineDecorationStore.OnLinesRemoved(index, count);
+        textDecorationStore.OnLinesRemoved(index, count);
+        documentChangeManager.RecordChange(index, count, 0);
 
         //clear up the memory of the list if more than 1_000_000 items are removed
         if (count > 1_000_000)
@@ -171,7 +236,11 @@ internal class TextManager
 
     public void AddLine(string content = "")
     {
+        int insertionIndex = totalLines.Count;
         totalLines.Add(content);
+        lineDecorationStore.OnLinesInserted(insertionIndex, 1);
+        textDecorationStore.OnLinesInserted(insertionIndex, 1);
+        documentChangeManager.RecordChange(insertionIndex, 0, 1);
     }
     public bool SwapLines(int originalIndex, int newIndex)
     {
@@ -179,7 +248,15 @@ internal class TextManager
             newIndex < 0 || newIndex >= totalLines.Count)
             return false;
 
+        if (originalIndex == newIndex)
+            return true;
+
         (totalLines[originalIndex], totalLines[newIndex]) = (totalLines[newIndex], totalLines[originalIndex]);
+        textDecorationStore.OnLinesSwapped(originalIndex, newIndex);
+        int firstChangedLine = Math.Min(originalIndex, newIndex);
+        int secondChangedLine = Math.Max(originalIndex, newIndex);
+        documentChangeManager.RecordChange(firstChangedLine, 1, 1);
+        documentChangeManager.RecordChange(secondChangedLine, 1, 1);
         return true;
     }
 
@@ -229,5 +306,34 @@ internal class TextManager
         }
 
         return wordCount;
+    }
+
+    private string JoinLines(int start, int count)
+    {
+        if (count == 0)
+            return string.Empty;
+
+        int resultLength = checked(NewLineCharacter.Length * (count - 1));
+        ReadOnlySpan<string> lines = totalLines.Span.Slice(start, count);
+        foreach (string line in lines)
+            resultLength = checked(resultLength + line.Length);
+
+        var state = (Lines: totalLines, Start: start, Count: count, Separator: NewLineCharacter);
+        return string.Create(resultLength, state, static (destination, joinState) =>
+        {
+            int destinationIndex = 0;
+            ReadOnlySpan<string> sourceLines = joinState.Lines.Span.Slice(joinState.Start, joinState.Count);
+            for (int lineIndex = 0; lineIndex < sourceLines.Length; lineIndex++)
+            {
+                if (lineIndex > 0)
+                {
+                    joinState.Separator.AsSpan().CopyTo(destination[destinationIndex..]);
+                    destinationIndex += joinState.Separator.Length;
+                }
+
+                sourceLines[lineIndex].AsSpan().CopyTo(destination[destinationIndex..]);
+                destinationIndex += sourceLines[lineIndex].Length;
+            }
+        });
     }
 }

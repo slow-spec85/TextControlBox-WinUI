@@ -1,0 +1,70 @@
+name: Release checks
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-check-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  DOTNET_NOLOGO: true
+  PACKAGE_OUTPUT: ${{ github.workspace }}\artifacts\nuget
+
+jobs:
+  build-and-validate:
+    name: Build and validate x64 package
+    if: github.repository == 'slow-spec85/TextControlBox-WinUI'
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore x64 solution
+        run: dotnet restore TextControlBox-WinUI.sln -p:Platform=x64
+
+      - name: Build library and test project
+        run: dotnet build TextControlBox-WinUI.sln --configuration Release -p:Platform=x64 --no-restore
+
+      - name: Pack library
+        run: dotnet pack TextControlBox\TextControlBox.csproj --configuration Release -p:Platform=x64 --no-build --output "${{ env.PACKAGE_OUTPUT }}"
+
+      - name: Validate package and validator regression checks
+        shell: pwsh
+        run: |
+          $packages = @(Get-ChildItem -LiteralPath "${{ env.PACKAGE_OUTPUT }}" -Filter "*.nupkg")
+          if ($packages.Count -ne 1) {
+              throw "Expected exactly one .nupkg; found $($packages.Count)."
+          }
+
+          powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass `
+              -File ".\TextControlBox.Tests\Build\PackageValidatorTests.ps1" `
+              -PackagePath $packages[0].FullName
+
+          if ($LASTEXITCODE -ne 0) {
+              throw "Package validator regression checks failed with exit code $LASTEXITCODE."
+          }
+
+      - name: Upload validated package
+        uses: actions/upload-artifact@v4
+        with:
+          name: textcontrolbox-nuget-${{ github.sha }}
+          path: ${{ env.PACKAGE_OUTPUT }}\*.nupkg
+          if-no-files-found: error
+          retention-days: 14

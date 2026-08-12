@@ -50,6 +50,7 @@ namespace TextControlBoxNS.Core.Renderer
             int unrenderedLinesToRenderStart,
             int numberOfRenderedLines,
             float fontSize,
+            float dpiScale,
             Color selectionColor
             )
         {
@@ -169,7 +170,13 @@ namespace TextControlBoxNS.Core.Renderer
                         };
                     }
 
-                    ccls.FillRectangle(Utils.CreateRect(regions[i].LayoutBounds, marginLeft, marginTop), selectionColor);
+                    ccls.FillRectangle(
+                        Utils.CreateLineAlignedRect(
+                            regions[i].LayoutBounds,
+                            dpiScale,
+                            marginLeft,
+                            marginTop),
+                        selectionColor);
                 }
             }
             args.DrawingSession.DrawImage(canvasCommandList);
@@ -196,6 +203,7 @@ namespace TextControlBoxNS.Core.Renderer
                     textRenderer.NumberOfStartLine,
                     textRenderer.NumberOfRenderedLines,
                     zoomManager.ZoomedFontSize,
+                    canvasSelection.DpiScale,
                     designHelper._Design.SelectionColor
                 );
             }

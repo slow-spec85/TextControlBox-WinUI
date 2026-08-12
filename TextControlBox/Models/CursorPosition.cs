@@ -50,7 +50,11 @@ public class CursorPosition
         this.CharacterPosition = cursor;
     }
 
-    public string ToString()
+    /// <summary>
+    /// Returns a readable representation of the line and character position.
+    /// </summary>
+    /// <returns>The zero-based line and character position.</returns>
+    public override string ToString()
     {
         return $"Line: {LineNumber}, Char: {CharacterPosition}";
     }

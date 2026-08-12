@@ -90,4 +90,37 @@ internal class Utils
                 Math.Ceiling(rect.Right + marginLeft), //Width
                 Math.Ceiling(rect.Bottom + marginTop))); //Height
     }
+
+    public static Rect CreateLineAlignedRect(
+        float x,
+        float y,
+        float width,
+        float height,
+        float dpiScale)
+    {
+        return CreateLineAlignedRect(new Rect(x, y, width, height), dpiScale);
+    }
+
+    public static Rect CreateLineAlignedRect(
+        Rect rect,
+        float dpiScale,
+        float marginLeft = 0,
+        float marginTop = 0)
+    {
+        double scale = dpiScale > 0 && float.IsFinite(dpiScale) ? dpiScale : 1;
+        double left = Math.Floor((rect.Left + marginLeft) * scale) / scale;
+        double top = Math.Round(
+            (rect.Top + marginTop) * scale,
+            MidpointRounding.AwayFromZero) / scale;
+        double right = Math.Ceiling((rect.Right + marginLeft) * scale) / scale;
+        double bottom = Math.Round(
+            (rect.Bottom + marginTop) * scale,
+            MidpointRounding.AwayFromZero) / scale;
+
+        return new Rect(
+            left,
+            top,
+            Math.Max(0, right - left),
+            Math.Max(0, bottom - top));
+    }
 }

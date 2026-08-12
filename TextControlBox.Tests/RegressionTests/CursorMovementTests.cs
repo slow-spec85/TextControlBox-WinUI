@@ -42,8 +42,8 @@ namespace TextControlBox.Tests.RegressionTests
             int charPos = core.cursorManager.CharacterPosition;
             int lineLen = core.textManager.GetLineLength(core.cursorManager.LineNumber);
 
-            Assert.IsTrue(charPos >= 0, "CharacterPosition must not be negative after moving left on an empty line");
-            Assert.IsTrue(charPos <= lineLen, "CharacterPosition must be within line bounds after moving left");
+            Assert.IsGreaterThanOrEqualTo(0, charPos, "CharacterPosition must not be negative after moving left on an empty line");
+            Assert.IsLessThanOrEqualTo(lineLen, charPos, "CharacterPosition must be within line bounds after moving left");
         }
 
         [UITestMethod]

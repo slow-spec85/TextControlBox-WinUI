@@ -2,6 +2,8 @@
 using Microsoft.UI.Xaml;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using TextControlBoxNS.Models;
 using Windows.UI.Text;
 using static TextControlBoxNS.Core.Text.TextManager;
@@ -13,7 +15,16 @@ internal class SyntaxHighlightingRenderer
     public readonly static FontWeight BoldFont = new FontWeight(600);
     public const FontStyle ItalicFont = FontStyle.Italic;
 
-    public static void UpdateSyntaxHighlighting(LineSliceResult lineSliceResult, string newLineCharacter, CanvasTextLayout drawnTextLayout, ApplicationTheme theme, SyntaxHighlightLanguage syntaxHighlightingLanguage, bool syntaxHighlighting)
+    public static void UpdateSyntaxHighlighting(
+        LineSliceResult lineSliceResult,
+        int startLine,
+        string newLineCharacter,
+        CanvasTextLayout drawnTextLayout,
+        ApplicationTheme theme,
+        SyntaxHighlightLanguage syntaxHighlightingLanguage,
+        bool syntaxHighlighting,
+        StatefulSyntaxHighlightingManager statefulManager,
+        SyntaxHighlightingSession session)
     {
         if (!syntaxHighlighting)
             return;
@@ -24,9 +35,26 @@ internal class SyntaxHighlightingRenderer
         {
             foreach (var rule in syntaxHighlightingLanguage.HighlightRules)
             {
-                foreach (var span in rule.GetHighlights(lineSliceResult.Lines, lineSliceResult.Text, newLineCharacter))
+                if (session.IsQuarantined(rule))
+                    continue;
+
+                List<HighlightSpan> spans;
+                try
                 {
-                    ApplyHighlightSpan(drawnTextLayout, span, isLightTheme);
+                    spans = rule.GetHighlights(
+                        lineSliceResult.Lines,
+                        lineSliceResult.Text,
+                        newLineCharacter);
+                }
+                catch (RegexMatchTimeoutException)
+                {
+                    session.Quarantine(rule);
+                    continue;
+                }
+
+                foreach (var span in spans)
+                {
+                    ApplyHighlightSpan(drawnTextLayout, span, isLightTheme, session);
                 }
             }
         }
@@ -34,34 +62,62 @@ internal class SyntaxHighlightingRenderer
         {
             foreach (var highlight in syntaxHighlightingLanguage.Highlights)
             {
-                if (highlight.PrecompiledRegex == null) return;
+                if (highlight.PrecompiledRegex == null || session.IsQuarantined(highlight))
+                    continue;
 
-                var color = isLightTheme ? highlight.ColorLight_Clr : highlight.ColorDark_Clr;
+                var fallbackColor = isLightTheme
+                    ? highlight.ColorLight_Clr
+                    : highlight.ColorDark_Clr;
+                var color = session.ResolveColor(
+                    highlight.Role,
+                    isLightTheme,
+                    fallbackColor);
 
-                foreach (var match in highlight.PrecompiledRegex.EnumerateMatches(lineSliceResult.Text))
+                try
                 {
-                    int index = match.Index;
-                    int length = match.Length;
-
-                    drawnTextLayout.SetColor(index, length, color);
-
-                    if (highlight.CodeStyle != null)
+                    foreach (var match in highlight.PrecompiledRegex.EnumerateMatches(lineSliceResult.Text))
                     {
-                        if (highlight.CodeStyle.Italic)
-                            drawnTextLayout.SetFontStyle(index, length, ItalicFont);
-                        if (highlight.CodeStyle.Bold)
-                            drawnTextLayout.SetFontWeight(index, length, BoldFont);
-                        if (highlight.CodeStyle.Underlined)
-                            drawnTextLayout.SetUnderline(index, length, true);
+                        int index = match.Index;
+                        int length = match.Length;
+
+                        drawnTextLayout.SetColor(index, length, color);
+
+                        if (highlight.CodeStyle != null)
+                        {
+                            if (highlight.CodeStyle.Italic)
+                                drawnTextLayout.SetFontStyle(index, length, ItalicFont);
+                            if (highlight.CodeStyle.Bold)
+                                drawnTextLayout.SetFontWeight(index, length, BoldFont);
+                            if (highlight.CodeStyle.Underlined)
+                                drawnTextLayout.SetUnderline(index, length, true);
+                        }
                     }
+                }
+                catch (RegexMatchTimeoutException)
+                {
+                    session.Quarantine(highlight);
                 }
             }
         }
+
+        foreach (HighlightSpan span in statefulManager.GetHighlights(
+            syntaxHighlightingLanguage,
+            startLine,
+            lineSliceResult.Lines,
+            newLineCharacter))
+        {
+            ApplyHighlightSpan(drawnTextLayout, span, isLightTheme, session);
+        }
     }
 
-    private static void ApplyHighlightSpan(CanvasTextLayout drawnTextLayout, HighlightSpan span, bool isLightTheme)
+    private static void ApplyHighlightSpan(
+        CanvasTextLayout drawnTextLayout,
+        HighlightSpan span,
+        bool isLightTheme,
+        SyntaxHighlightingSession session)
     {
-        var color = isLightTheme ? span.ColorLight : span.ColorDark;
+        var fallbackColor = isLightTheme ? span.ColorLight : span.ColorDark;
+        var color = session.ResolveColor(span.Role, isLightTheme, fallbackColor);
         drawnTextLayout.SetColor(span.Start, span.Length, color);
 
         if (span.Style != null)

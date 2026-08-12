@@ -14,6 +14,36 @@ namespace TextControlBoxNS;
 /// </summary>
 public partial class TextControlBox : UserControl
 {
+    /// <summary>
+    /// Identifies the <see cref="RightGutterContent"/> dependency property.
+    /// </summary>
+    public static readonly DependencyProperty RightGutterContentProperty =
+        DependencyProperty.Register(
+            nameof(RightGutterContent),
+            typeof(object),
+            typeof(TextControlBox),
+            new PropertyMetadata(null, OnRightGutterContentChanged));
+
+    /// <summary>
+    /// Identifies the <see cref="ShowLineGutter"/> dependency property.
+    /// </summary>
+    public static readonly DependencyProperty ShowLineGutterProperty =
+        DependencyProperty.Register(
+            nameof(ShowLineGutter),
+            typeof(bool),
+            typeof(TextControlBox),
+            new PropertyMetadata(true, OnShowLineGutterChanged));
+
+    /// <summary>
+    /// Identifies the <see cref="LineGutterWidth"/> dependency property.
+    /// </summary>
+    public static readonly DependencyProperty LineGutterWidthProperty =
+        DependencyProperty.Register(
+            nameof(LineGutterWidth),
+            typeof(double),
+            typeof(TextControlBox),
+            new PropertyMetadata(24d, OnLineGutterWidthChanged));
+
     private readonly CoreTextControlBox coreTextBox;
 
     /// <summary>
@@ -27,6 +57,7 @@ public partial class TextControlBox : UserControl
         coreTextBox.eventsManager.Loaded += EventsManager_Loaded;
         coreTextBox.eventsManager.ZoomChanged += ZoomManager_ZoomChanged;
         coreTextBox.eventsManager.TextChanged += EventsManager_TextChanged;
+        coreTextBox.eventsManager.DocumentChanged += EventsManager_DocumentChanged;
         coreTextBox.eventsManager.SelectionChanged += EventsManager_SelectionChanged;
         coreTextBox.eventsManager.GotFocus += EventsManager_GotFocus;
         coreTextBox.eventsManager.LostFocus += EventsManager_LostFocus;
@@ -35,8 +66,64 @@ public partial class TextControlBox : UserControl
         coreTextBox.eventsManager.TabsSpacesChanged += EventsManager_TabsSpacesChanged;
         coreTextBox.eventsManager.LineEndingChanged += EventsManager_LineEndingChanged;
         this.Content = coreTextBox;
+        base.ActualThemeChanged += TextControlBox_ActualThemeChanged;
 
         this.RequestedTheme = ElementTheme.Default;
+    }
+
+    /// <summary>
+    /// Gets or sets optional content displayed between the editor viewport and the vertical
+    /// scrollbar. A <see langword="null"/> value leaves no gutter space reserved.
+    /// </summary>
+    public object RightGutterContent
+    {
+        get => GetValue(RightGutterContentProperty);
+        set => SetValue(RightGutterContentProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets whether the line gutter can reserve space and render decorations.
+    /// </summary>
+    public bool ShowLineGutter
+    {
+        get => (bool)GetValue(ShowLineGutterProperty);
+        set => SetValue(ShowLineGutterProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets the line gutter width in effective pixels. The default is 24.
+    /// </summary>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when the value is negative, infinite, or not a number.
+    /// </exception>
+    public double LineGutterWidth
+    {
+        get => (double)GetValue(LineGutterWidthProperty);
+        set => SetValue(LineGutterWidthProperty, value);
+    }
+
+    private static void OnRightGutterContentChanged(
+        DependencyObject dependencyObject,
+        DependencyPropertyChangedEventArgs args)
+    {
+        var textControlBox = (TextControlBox)dependencyObject;
+        textControlBox.coreTextBox.RightGutterContent = args.NewValue;
+    }
+
+    private static void OnShowLineGutterChanged(
+        DependencyObject dependencyObject,
+        DependencyPropertyChangedEventArgs args)
+    {
+        var textControlBox = (TextControlBox)dependencyObject;
+        textControlBox.coreTextBox.ShowLineGutter = (bool)args.NewValue;
+    }
+
+    private static void OnLineGutterWidthChanged(
+        DependencyObject dependencyObject,
+        DependencyPropertyChangedEventArgs args)
+    {
+        var textControlBox = (TextControlBox)dependencyObject;
+        textControlBox.coreTextBox.LineGutterWidth = (double)args.NewValue;
     }
 
     private void EventsManager_LineEndingChanged(LineEnding lineEnding)
@@ -51,6 +138,8 @@ public partial class TextControlBox : UserControl
 
     private void TextControlBox_Loaded(object sender, RoutedEventArgs e)
     {
+        ApplyActualTheme();
+
         if (coreTextBox.IsLoaded)
         {
             this.Focus(FocusState.Programmatic);
@@ -59,6 +148,19 @@ public partial class TextControlBox : UserControl
 
         coreTextBox.InitialiseOnStart();
     }
+
+    private void TextControlBox_ActualThemeChanged(FrameworkElement sender, object args)
+    {
+        ApplyActualTheme();
+    }
+
+    private void ApplyActualTheme()
+    {
+        ElementTheme actualTheme = base.ActualTheme;
+        if (coreTextBox.RequestedTheme != actualTheme)
+            coreTextBox.RequestedTheme = actualTheme;
+    }
+
     private void EventsManager_LinkClicked(string url)
     {
         LinkClicked?.Invoke(this, url);
@@ -83,6 +185,11 @@ public partial class TextControlBox : UserControl
     private void EventsManager_TextChanged()
     {
         TextChanged?.Invoke(this);
+    }
+
+    private void EventsManager_DocumentChanged(DocumentChangedEventArgs args)
+    {
+        DocumentChanged?.Invoke(this, args);
     }
     private void ZoomManager_ZoomChanged(int zoomFactor)
     {
@@ -168,7 +275,7 @@ public partial class TextControlBox : UserControl
     /// <param name="autodetectTabsSpaces" >Whether to autodetect tabs and spaces settings from the lines</param>
     public void LoadLines(IEnumerable<string> lines, bool autodetectTabsSpaces = true, LineEnding lineEnding = LineEnding.CRLF)
     {
-        coreTextBox.LoadLines(lines, autodetectTabsSpaces , lineEnding);
+        coreTextBox.LoadLines(lines, autodetectTabsSpaces, lineEnding);
     }
 
     /// <summary>
@@ -358,6 +465,122 @@ public partial class TextControlBox : UserControl
     public string GetLinesText(int startLine, int length)
     {
         return coreTextBox.GetLinesText(startLine, length);
+    }
+
+    /// <summary>
+    /// Adds or atomically replaces a named group of line background decorations.
+    /// </summary>
+    /// <remarks>
+    /// Line indexes are zero-based and ranges are inclusive. Higher-priority decorations are
+    /// painted later. For equal priorities, decorations set later are painted later. An empty
+    /// collection removes the group. Decorations follow existing lines when lines are inserted
+    /// or removed; loading a new document clears all groups.
+    /// </remarks>
+    /// <param name="groupKey">A caller-defined key that identifies the replaceable group.</param>
+    /// <param name="decorations">The complete replacement contents for the group.</param>
+    /// <exception cref="ArgumentException">
+    /// Thrown when the key is empty or the collection contains a null decoration.
+    /// </exception>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when a decoration is outside the current document line range.
+    /// </exception>
+    public void SetLineDecorations(string groupKey, IEnumerable<LineDecoration> decorations)
+    {
+        coreTextBox.SetLineDecorations(groupKey, decorations);
+    }
+
+    /// <summary>
+    /// Removes a named group of line decorations.
+    /// </summary>
+    /// <param name="groupKey">The caller-defined group key.</param>
+    /// <returns><see langword="true"/> when the group existed and was removed.</returns>
+    public bool RemoveLineDecorations(string groupKey)
+    {
+        return coreTextBox.RemoveLineDecorations(groupKey);
+    }
+
+    /// <summary>
+    /// Removes every line decoration group.
+    /// </summary>
+    public void ClearLineDecorations()
+    {
+        coreTextBox.ClearLineDecorations();
+    }
+
+    /// <summary>
+    /// Adds or atomically replaces a named group of line gutter decorations.
+    /// </summary>
+    /// <remarks>
+    /// Line indexes are zero-based. Higher-priority decorations are applied later. For equal
+    /// priorities, decorations set later are applied later. An empty collection removes the
+    /// group. Callers are responsible for replacing groups after document edits that change
+    /// line indexes.
+    /// </remarks>
+    /// <param name="groupKey">A caller-defined key that identifies the replaceable group.</param>
+    /// <param name="decorations">The complete replacement contents for the group.</param>
+    /// <exception cref="ArgumentException">
+    /// Thrown when the key is empty or the collection contains a null decoration.
+    /// </exception>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when a decoration is outside the current document line range.
+    /// </exception>
+    public void SetLineGutterDecorations(
+        string groupKey,
+        IEnumerable<LineGutterDecoration> decorations)
+    {
+        coreTextBox.SetLineGutterDecorations(groupKey, decorations);
+    }
+
+    /// <summary>Removes a named group of line gutter decorations.</summary>
+    /// <param name="groupKey">The caller-defined group key.</param>
+    /// <returns><see langword="true"/> when the group existed and was removed.</returns>
+    public bool RemoveLineGutterDecorations(string groupKey)
+    {
+        return coreTextBox.RemoveLineGutterDecorations(groupKey);
+    }
+
+    /// <summary>Removes every line gutter decoration group.</summary>
+    public void ClearLineGutterDecorations()
+    {
+        coreTextBox.ClearLineGutterDecorations();
+    }
+
+    /// <summary>
+    /// Adds or atomically replaces a named group of text range decorations.
+    /// </summary>
+    /// <remarks>
+    /// Line and column indexes are zero-based. Character ranges are end-exclusive. Higher
+    /// priorities are applied later; at equal priority, decorations set later are applied
+    /// later. Foreground colors override syntax highlighting for the same range. An empty
+    /// collection removes the group.
+    /// </remarks>
+    /// <param name="groupKey">A caller-defined key that identifies the replaceable group.</param>
+    /// <param name="decorations">The complete replacement contents for the group.</param>
+    /// <exception cref="ArgumentException">
+    /// Thrown when the key is empty or the collection contains a null decoration.
+    /// </exception>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when a decoration is outside the current document text.
+    /// </exception>
+    public void SetTextDecorations(
+        string groupKey,
+        IEnumerable<TextRangeDecoration> decorations)
+    {
+        coreTextBox.SetTextDecorations(groupKey, decorations);
+    }
+
+    /// <summary>Removes a named group of text range decorations.</summary>
+    /// <param name="groupKey">The caller-defined group key.</param>
+    /// <returns><see langword="true"/> when the group existed and was removed.</returns>
+    public bool RemoveTextDecorations(string groupKey)
+    {
+        return coreTextBox.RemoveTextDecorations(groupKey);
+    }
+
+    /// <summary>Removes every text range decoration group.</summary>
+    public void ClearTextDecorations()
+    {
+        coreTextBox.ClearTextDecorations();
     }
 
     /// <summary>
@@ -656,6 +879,7 @@ public partial class TextControlBox : UserControl
     /// <remarks>
     /// This method modifies the text programmatically and is unaffected by
     /// <see cref="IsReadOnly"/>.
+    /// </remarks>
     /// <param name="start">The zero based index to start from</param>
     /// <param name="text">The array of lines to add</param>
     /// <returns>True if successfull</returns>
@@ -680,7 +904,6 @@ public partial class TextControlBox : UserControl
     /// <param name="spaces">The number of spaces to use when converting tabs to spaces. Must be greater than zero.</param>
     /// <param name="useSpacesInsteadTabs">Indicates whether tabs should be replaced with spaces.</param>
     /// <param name="ignoreIsReadOnly">Ignores the isReadOnly property of the textbox.</param>
-    /// </remarks>
 
     public void RewriteTabsSpaces(int spaces, bool useSpacesInsteadTabs, bool ignoreIsReadOnly = false)
     {
@@ -700,6 +923,15 @@ public partial class TextControlBox : UserControl
     {
         get => coreTextBox.SyntaxHighlighting;
         set => coreTextBox.SyntaxHighlighting = value;
+    }
+
+    /// <summary>
+    /// Gets or sets semantic color overrides for syntax highlighting in this control.
+    /// </summary>
+    public SyntaxHighlightPalette SyntaxHighlightPalette
+    {
+        get => coreTextBox.SyntaxHighlightPalette;
+        set => coreTextBox.SyntaxHighlightPalette = value;
     }
 
     /// <summary>
@@ -749,6 +981,20 @@ public partial class TextControlBox : UserControl
         get => coreTextBox.FontSize;
         set => coreTextBox.FontSize = value;
     }
+
+    /// <summary>
+    /// Gets or sets the additional spacing, in device-independent units (DIPs),
+    /// added to the rendered font size for each line. The default is 2.
+    /// </summary>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when the value is negative, infinite, or not a number.
+    /// </exception>
+    public float LineSpacing
+    {
+        get => coreTextBox.LineSpacing;
+        set => coreTextBox.LineSpacing = value;
+    }
+
     /// <summary>
     /// Gets the actual rendered size of the font in pixels.
     /// </summary>
@@ -772,8 +1018,12 @@ public partial class TextControlBox : UserControl
     /// </summary>
     public new ElementTheme RequestedTheme
     {
-        get => coreTextBox.RequestedTheme;
-        set => coreTextBox.RequestedTheme = value;
+        get => base.RequestedTheme;
+        set
+        {
+            base.RequestedTheme = value;
+            ApplyActualTheme();
+        }
     }
 
     /// <summary>
@@ -809,6 +1059,28 @@ public partial class TextControlBox : UserControl
         get => coreTextBox.ShowLineNumbers;
         set => coreTextBox.ShowLineNumbers = value;
     }
+
+    /// <summary>
+    /// Replaces the automatically generated line numbers with caller-provided labels.
+    /// </summary>
+    /// <remarks>
+    /// Labels are matched to zero-based document line indexes. Empty labels leave the
+    /// corresponding rows blank. Labels missing for document rows are also rendered as blank.
+    /// The control takes a snapshot of the supplied collection.
+    /// </remarks>
+    /// <param name="labels">The complete set of labels for the current document.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="labels"/> is null.</exception>
+    public void SetLineNumberLabels(IEnumerable<string> labels)
+    {
+        coreTextBox.SetLineNumberLabels(labels);
+    }
+
+    /// <summary>Restores automatically generated sequential line numbers.</summary>
+    public void ClearLineNumberLabels()
+    {
+        coreTextBox.ClearLineNumberLabels();
+    }
+
     /// <summary>
     /// Gets or sets a value indicating whether the line highlighter should be shown in the custom textbox.
     /// </summary>
@@ -1058,16 +1330,16 @@ public partial class TextControlBox : UserControl
     /// This acts like a padding zone that defines how close the mouse needs to be to the edges 
     /// before the text begins to scroll up, down, left, or right.
     /// </summary>
-    public Thickness SelectionScrollStartBorderDistance 
-    { 
-        get => coreTextBox.SelectionScrollStartBorderDistance; 
+    public Thickness SelectionScrollStartBorderDistance
+    {
+        get => coreTextBox.SelectionScrollStartBorderDistance;
         set => coreTextBox.SelectionScrollStartBorderDistance = value;
     }
 
     /// <summary>
     /// Gets or sets a value indicating whether hyperlinks within the text are highlighted.
     /// </summary>
-    public bool HighlightLinks 
+    public bool HighlightLinks
     {
         get => coreTextBox.HighlightLinks;
         set => coreTextBox.HighlightLinks = value;
@@ -1093,11 +1365,22 @@ public partial class TextControlBox : UserControl
     /// </summary>
     /// <param name="sender">The instance of the TextControlBox that raised the event.</param>
     public delegate void TextChangedEvent(TextControlBox sender);
-    
+
     /// <summary>
     /// Occurs when the text is changed in the TextControlBox.
     /// </summary>
     public event TextChangedEvent TextChanged;
+
+    /// <summary>
+    /// Occurs after an incremental batch of document line changes has been applied.
+    /// </summary>
+    /// <remarks>
+    /// Changes use zero-based line indexes and replacement semantics. A grouped edit, undo, redo,
+    /// or load operation produces one version increment and one event after its line mutations
+    /// have been applied. No ordering relative to the legacy <see cref="TextChanged"/> and
+    /// <see cref="TextLoaded"/> events is guaranteed.
+    /// </remarks>
+    public event EventHandler<DocumentChangedEventArgs> DocumentChanged;
 
     /// <summary>
     /// Represents a delegate used for handling the selection changed event in the TextControlBox.

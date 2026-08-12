@@ -26,7 +26,8 @@ internal sealed class RegexHighlightRule : IHighlightRule
                 Length = match.Length,
                 ColorLight = _highlight.ColorLight_Clr,
                 ColorDark = _highlight.ColorDark_Clr,
-                Style = _highlight.CodeStyle
+                Style = _highlight.CodeStyle,
+                Role = _highlight.Role,
             });
         }
         return highlights;

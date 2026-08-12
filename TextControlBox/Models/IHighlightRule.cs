@@ -60,4 +60,9 @@ public struct HighlightSpan
     /// Font style applied to the highlighted text (e.g. bold, italic).
     /// </summary>
     public CodeFontStyle Style { get; init; }
+
+    /// <summary>
+    /// Semantic role used to resolve an optional palette override.
+    /// </summary>
+    public SyntaxHighlightRole Role { get; init; }
 }

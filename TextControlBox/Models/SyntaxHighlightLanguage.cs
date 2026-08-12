@@ -1,7 +1,5 @@
 ﻿using Newtonsoft.Json;
-using System.Text.RegularExpressions;
 using TextControlBoxNS.Models;
-using Windows.Devices.Power;
 
 namespace TextControlBoxNS;
 
@@ -46,6 +44,13 @@ public class SyntaxHighlightLanguage
     /// </summary>
     [JsonIgnore]
     public IHighlightRule[] HighlightRules { get; set; }
+
+    /// <summary>
+    /// Gets or sets line-oriented rules that preserve syntax state across line boundaries.
+    /// Stateful rules are applied after <see cref="Highlights"/> and <see cref="HighlightRules"/>.
+    /// </summary>
+    [JsonIgnore]
+    public IStatefulHighlightRule[] StatefulHighlightRules { get; set; }
 
     internal void CompileAllRegex()
     {

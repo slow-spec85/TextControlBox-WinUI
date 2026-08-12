@@ -3,12 +3,57 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.VisualStudio.TestTools.UnitTesting.AppContainer;
 using System;
 using TextControlBoxNS;
+using Windows.UI;
 
 namespace TextControlBox.Tests;
 
 [TestClass]
 public class PublicApiRegressionTests
 {
+    [UITestMethod]
+    public void SyntaxHighlightPalette_IsIsolatedPerControl()
+    {
+        var first = new TextControlBoxNS.TextControlBox();
+        var second = new TextControlBoxNS.TextControlBox();
+        first.SelectSyntaxHighlightingById(SyntaxHighlightID.CSharp);
+        second.SelectSyntaxHighlightingById(SyntaxHighlightID.CSharp);
+        SyntaxHighlightLanguage sharedLanguage = first.SyntaxHighlighting;
+        SyntaxHighlightPalette firstPalette = new(
+            new SyntaxHighlightPaletteEntry(
+                SyntaxHighlightRole.Keyword,
+                Color.FromArgb(255, 255, 0, 0),
+                Color.FromArgb(255, 0, 0, 255)));
+        SyntaxHighlightPalette secondPalette = new(
+            new SyntaxHighlightPaletteEntry(
+                SyntaxHighlightRole.Keyword,
+                Color.FromArgb(255, 0, 128, 0),
+                Color.FromArgb(255, 255, 255, 0)));
+
+        first.SyntaxHighlightPalette = firstPalette;
+        second.SyntaxHighlightPalette = secondPalette;
+
+        Assert.AreSame(firstPalette, first.SyntaxHighlightPalette);
+        Assert.AreSame(secondPalette, second.SyntaxHighlightPalette);
+        Assert.AreSame(sharedLanguage, first.SyntaxHighlighting);
+        Assert.AreSame(sharedLanguage, second.SyntaxHighlighting);
+    }
+
+    [UITestMethod]
+    public void RequestedTheme_UpdatesFrameworkThemeAndDefaultDesign()
+    {
+        var textBox = new TextControlBoxNS.TextControlBox();
+
+        textBox.RequestedTheme = ElementTheme.Light;
+
+        Assert.AreEqual(ElementTheme.Light, ((FrameworkElement)textBox).RequestedTheme);
+        Assert.AreEqual(Color.FromArgb(255, 50, 50, 50), textBox.TextColor);
+
+        textBox.RequestedTheme = ElementTheme.Dark;
+
+        Assert.AreEqual(ElementTheme.Dark, ((FrameworkElement)textBox).RequestedTheme);
+        Assert.AreEqual(Color.FromArgb(255, 255, 255, 255), textBox.TextColor);
+    }
+
     [UITestMethod]
     public void SelectLine_OutOfRange_ReturnsFalse_AndDoesNotThrow()
     {
@@ -82,6 +127,19 @@ public class PublicApiRegressionTests
         Assert.AreEqual(value.Top, tb.SelectionScrollStartBorderDistance.Top);
         Assert.AreEqual(value.Right, tb.SelectionScrollStartBorderDistance.Right);
         Assert.AreEqual(value.Bottom, tb.SelectionScrollStartBorderDistance.Bottom);
+    }
+
+    [UITestMethod]
+    public void LineSpacing_Setter_SetsValue_AndRejectsInvalidValues()
+    {
+        var tb = TestHelper.MakeTextbox(3);
+
+        tb.LineSpacing = 6;
+
+        Assert.AreEqual(6f, tb.LineSpacing);
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => tb.LineSpacing = -1);
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => tb.LineSpacing = float.NaN);
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => tb.LineSpacing = float.PositiveInfinity);
     }
 
     [UITestMethod]
