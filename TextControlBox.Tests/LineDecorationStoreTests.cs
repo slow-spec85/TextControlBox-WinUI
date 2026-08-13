@@ -1,4 +1,5 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.VisualStudio.TestTools.UnitTesting.AppContainer;
 using System;
 using TextControlBoxNS.Core;
 using TextControlBoxNS.Core.Text;
@@ -121,7 +122,7 @@ public class LineDecorationStoreTests
         Assert.AreEqual((6, 7), (remaining[1].StartLine, remaining[1].EndLine));
     }
 
-    [TestMethod]
+    [UITestMethod]
     public void TextManager_LineMutationsUpdateDecorations()
     {
         EditorTestContext editor = EditorTestContext.Create("zero", "one", "two", "three");
@@ -139,7 +140,7 @@ public class LineDecorationStoreTests
         Assert.AreEqual((2, 2), (decoration.StartLine, decoration.EndLine));
     }
 
-    [TestMethod]
+    [UITestMethod]
     public void GetLinesForRendering_JoinsRequestedSpanOnNet8()
     {
         TextManager textManager = EditorTestContext

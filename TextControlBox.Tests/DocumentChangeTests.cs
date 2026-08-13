@@ -78,7 +78,7 @@ public class DocumentChangeTests
              actual.Changes[0].InsertedLineCount));
     }
 
-    [TestMethod]
+    [UITestMethod]
     public void TextManager_NoOpLineReplacementDoesNotPublishChange()
     {
         TextManager textManager = CreateTextManager(out EventsManager eventsManager);
@@ -91,7 +91,7 @@ public class DocumentChangeTests
         Assert.AreEqual(0, eventCount);
     }
 
-    [TestMethod]
+    [UITestMethod]
     public void TextManager_SwapReportsOnlyChangedEndpoints()
     {
         TextManager textManager = CreateTextManager(out EventsManager eventsManager);

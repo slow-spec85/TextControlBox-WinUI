@@ -42,6 +42,24 @@ jobs:
       - name: Build library and test project
         run: dotnet build TextControlBox-WinUI.sln --configuration Release -p:Platform=x64 --no-restore
 
+      - name: Run packaged WinUI tests
+        shell: pwsh
+        run: |
+          .\TextControlBox.Tests\Build\RunWinUITests.ps1 `
+              -Configuration Release `
+              -Platform x64 `
+              -NoBuild `
+              -ResultsDirectory "${{ github.workspace }}\TestResults"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: textcontrolbox-test-results-${{ github.sha }}
+          path: ${{ github.workspace }}\TestResults\*.trx
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Pack library
         run: dotnet pack TextControlBox\TextControlBox.csproj --configuration Release -p:Platform=x64 --no-build --output "${{ env.PACKAGE_OUTPUT }}"
 

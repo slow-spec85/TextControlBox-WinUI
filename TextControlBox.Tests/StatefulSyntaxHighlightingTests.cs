@@ -1,4 +1,5 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.VisualStudio.TestTools.UnitTesting.AppContainer;
 using System;
 using System.Collections.Generic;
 using TextControlBoxNS;
@@ -121,7 +122,7 @@ public class StatefulSyntaxHighlightingTests
         Assert.AreEqual(rule.InitialState, state);
     }
 
-    [TestMethod]
+    [UITestMethod]
     public void ViewportStartingInsideRange_HighlightsFromFirstCharacter()
     {
         TestContext context = CreateContext("before /*", "inside", "end */", "after");
@@ -138,7 +139,7 @@ public class StatefulSyntaxHighlightingTests
             (highlights[0].Start, highlights[0].Length));
     }
 
-    [TestMethod]
+    [UITestMethod]
     public void Manager_PreservesSemanticRoleWhenConvertingVisibleOffsets()
     {
         var rule = new DelimitedHighlightRule(
@@ -161,7 +162,7 @@ public class StatefulSyntaxHighlightingTests
         Assert.AreEqual(SyntaxHighlightRole.Comment, highlights[0].Role);
     }
 
-    [TestMethod]
+    [UITestMethod]
     public void IdenticalViewportText_UsesDocumentLineState()
     {
         TestContext context = CreateContext("/*", "same", "*/", "same");
@@ -182,7 +183,7 @@ public class StatefulSyntaxHighlightingTests
         Assert.IsEmpty(outside);
     }
 
-    [TestMethod]
+    [UITestMethod]
     public void EditingOpeningDelimiter_InvalidatesFollowingLineState()
     {
         TestContext context = CreateContext("/*", "inside", "*/");
@@ -202,10 +203,10 @@ public class StatefulSyntaxHighlightingTests
             "\n");
 
         Assert.IsEmpty(highlights);
-        Assert.IsGreaterThan(context.Manager.Revision, revisionBeforeEdit);
+        Assert.IsGreaterThan(revisionBeforeEdit, context.Manager.Revision);
     }
 
-    [TestMethod]
+    [UITestMethod]
     public void InsertAndRemoveLines_RecalculateShiftedState()
     {
         TestContext context = CreateContext("plain", "inside", "*/");
@@ -229,7 +230,7 @@ public class StatefulSyntaxHighlightingTests
         Assert.IsEmpty(afterRemove);
     }
 
-    [TestMethod]
+    [UITestMethod]
     public void UnchangedState_StopsIncrementalRecalculationAtConvergence()
     {
         var countingRule = new CountingRule(

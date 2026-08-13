@@ -1,15 +1,8 @@
-<div align="center">
-<img src="images/Icon1.png" height="150px" width="auto">
-<h1>TextControlBox-WinUI</h1>
-</div>
+# TextControlBox-WinUI
 
-<div align="center">
-<img src="https://img.shields.io/github/issues/slow-spec85/TextControlBox-WinUI.svg?style=flat">
-<img src="https://img.shields.io/github/stars/slow-spec85/TextControlBox-WinUI.svg?style=flat">
-<img src="https://img.shields.io/github/repo-size/slow-spec85/TextControlBox-WinUI?style=flat">
-</div>
-
-<br/>
+[![GitHub issues](https://img.shields.io/github/issues/slow-spec85/TextControlBox-WinUI.svg?style=flat)](https://github.com/slow-spec85/TextControlBox-WinUI/issues)
+[![GitHub stars](https://img.shields.io/github/stars/slow-spec85/TextControlBox-WinUI.svg?style=flat)](https://github.com/slow-spec85/TextControlBox-WinUI/stargazers)
+[![Repository size](https://img.shields.io/github/repo-size/slow-spec85/TextControlBox-WinUI?style=flat)](https://github.com/slow-spec85/TextControlBox-WinUI)
 
 ## 🤔 What is TextControlBox?
 
@@ -75,7 +68,7 @@ NuGet package:
 
 * [SimpleGit11](https://github.com/slow-spec85/SimpleGit11-pub) — a WinUI Git client using the
 control as a reusable editor surface. An example of a customized TextControlBox-WinUI from this project:
-<img src="images/image1.png" height="auto" width="1000px">
+![TextControlBox-WinUI editor](https://raw.githubusercontent.com/slow-spec85/TextControlBox-WinUI/master/images/image1.png)
 
 ## 🛠️ Features
 

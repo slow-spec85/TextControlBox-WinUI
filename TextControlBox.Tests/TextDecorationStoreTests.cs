@@ -1,4 +1,5 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.VisualStudio.TestTools.UnitTesting.AppContainer;
 using System;
 using TextControlBoxNS.Core;
 using TextControlBoxNS.Core.Renderer;
@@ -40,7 +41,7 @@ public class TextDecorationStoreTests
             new TextRangeDecoration(0, 0, 1));
     }
 
-    [TestMethod]
+    [UITestMethod]
     public void VisibleDecorations_AreFilteredAndReturnedInStablePriorityOrder()
     {
         TestContext context = CreateContext("zero", "one", "two", "three");
@@ -67,7 +68,7 @@ public class TextDecorationStoreTests
         Assert.AreEqual(1, visible[2].StartColumn);
     }
 
-    [TestMethod]
+    [UITestMethod]
     public void InvalidReplacement_DoesNotChangeExistingGroup()
     {
         TestContext context = CreateContext("abc", "def");
@@ -88,7 +89,7 @@ public class TextDecorationStoreTests
         Assert.AreEqual(FirstColor, decoration.BackgroundColor);
     }
 
-    [TestMethod]
+    [UITestMethod]
     public void SetGroup_ReplacesAtomically_AndRemoveOrEmptyReplacementClearsGroup()
     {
         TestContext context = CreateContext("abc", "def");
@@ -114,7 +115,7 @@ public class TextDecorationStoreTests
         Assert.IsEmpty(context.Store.GetVisibleDecorations(0, 1));
     }
 
-    [TestMethod]
+    [UITestMethod]
     public void LineInsertionAndRemoval_ShiftAndRemoveDecorations()
     {
         TestContext context = CreateContext("zero", "one", "two", "three");
@@ -139,7 +140,7 @@ public class TextDecorationStoreTests
         Assert.IsEmpty(context.Store.GetVisibleDecorations(0, 2));
     }
 
-    [TestMethod]
+    [UITestMethod]
     public void LineTextShrink_ClipsOrRemovesInvalidRanges()
     {
         TestContext context = CreateContext("abcdef");
@@ -158,7 +159,7 @@ public class TextDecorationStoreTests
         Assert.IsEmpty(context.Store.GetVisibleDecorations(0, 0));
     }
 
-    [TestMethod]
+    [UITestMethod]
     public void SwappingLines_MovesDecorationsWithTheirText()
     {
         TestContext context = CreateContext("zero", "one", "two");
@@ -175,7 +176,7 @@ public class TextDecorationStoreTests
         Assert.AreEqual(2, moved.Line);
     }
 
-    [TestMethod]
+    [UITestMethod]
     public void RenderedIndexes_AreRelativeToVisibleTextAndIncludeLineEndings()
     {
         TestContext context = CreateContext("zero", "one", "two", "three");

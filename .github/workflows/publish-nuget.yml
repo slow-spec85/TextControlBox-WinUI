@@ -50,6 +50,11 @@ jobs:
               exit 0
           }
 
+          $tagObjectType = (git cat-file -t "refs/tags/${{ github.ref_name }}").Trim()
+          if ($LASTEXITCODE -ne 0 -or $tagObjectType -ne "tag") {
+              throw "Release tag '${{ github.ref_name }}' must be an annotated tag so its annotation can be used as GitHub Release notes."
+          }
+
           git fetch origin "refs/heads/master:refs/remotes/origin/master" --no-tags --force
           if ($LASTEXITCODE -ne 0) {
               throw "Failed to fetch public master."
@@ -87,6 +92,24 @@ jobs:
 
       - name: Build library and test project
         run: dotnet build TextControlBox-WinUI.sln --configuration Release -p:Platform=x64 --no-restore
+
+      - name: Run packaged WinUI tests
+        shell: pwsh
+        run: |
+          .\TextControlBox.Tests\Build\RunWinUITests.ps1 `
+              -Configuration Release `
+              -Platform x64 `
+              -NoBuild `
+              -ResultsDirectory "${{ github.workspace }}\TestResults"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: textcontrolbox-test-results-${{ github.sha }}
+          path: ${{ github.workspace }}\TestResults\*.trx
+          if-no-files-found: ignore
+          retention-days: 30
 
       - name: Pack library
         run: dotnet pack TextControlBox\TextControlBox.csproj --configuration Release -p:Platform=x64 --no-build --output "${{ env.PACKAGE_OUTPUT }}"
@@ -169,4 +192,65 @@ jobs:
 
           if ($LASTEXITCODE -ne 0) {
               throw "NuGet publication failed with exit code $LASTEXITCODE."
+          }
+
+  github_release:
+    name: Create GitHub Release
+    needs:
+      - build_and_validate
+      - publish
+    if: github.repository == 'slow-spec85/TextControlBox-WinUI' && needs.build_and_validate.outputs.is_release == 'true'
+    runs-on: windows-latest
+    timeout-minutes: 10
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout tagged commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download published package
+        uses: actions/download-artifact@v4
+        with:
+          name: textcontrolbox-nuget-${{ github.sha }}
+          path: artifacts\nuget
+
+      - name: Create release from annotated tag
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $version = "${{ needs.build_and_validate.outputs.version }}"
+          $packages = @(Get-ChildItem -LiteralPath "artifacts\nuget" -Filter "*.nupkg")
+          if ($packages.Count -ne 1) {
+              throw "Expected exactly one .nupkg; found $($packages.Count)."
+          }
+
+          gh release view $tag --json tagName 2>$null | Out-Null
+          if ($LASTEXITCODE -eq 0) {
+              Write-Host "GitHub Release '$tag' already exists; refreshing its package asset."
+              gh release upload $tag $packages[0].FullName --clobber
+          }
+          else {
+              $releaseArguments = @(
+                  "release", "create", $tag,
+                  $packages[0].FullName,
+                  "--verify-tag",
+                  "--title", $tag,
+                  "--notes-from-tag"
+              )
+
+              if ($version.Contains("-")) {
+                  $releaseArguments += "--prerelease"
+              }
+
+              gh @releaseArguments
+          }
+
+          if ($LASTEXITCODE -ne 0) {
+              throw "GitHub Release creation failed with exit code $LASTEXITCODE."
           }

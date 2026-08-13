@@ -1,4 +1,5 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.VisualStudio.TestTools.UnitTesting.AppContainer;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -82,7 +83,7 @@ public class SyntaxHighlightingSafetyTests
         Assert.AreEqual(2, timedOutInvocations);
     }
 
-    [TestMethod]
+    [UITestMethod]
     public void StatefulTimeout_QuarantinesOnlyFailingRule_AndContinuesRendering()
     {
         SyntaxHighlightingSession session = new();
