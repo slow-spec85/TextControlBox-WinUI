@@ -66,7 +66,7 @@ NuGet package:
 
 ## Used by
 
-* [SimpleGit11](https://github.com/slow-spec85/SimpleGit11-pub) — a WinUI Git client using the
+* [SimpleGit11](https://github.com/slow-spec85/SimpleGit11) — a WinUI Git client using the
 control as a reusable editor surface. An example of a customized TextControlBox-WinUI from this project:
 ![TextControlBox-WinUI editor](https://raw.githubusercontent.com/slow-spec85/TextControlBox-WinUI/master/images/image1.png)
 
