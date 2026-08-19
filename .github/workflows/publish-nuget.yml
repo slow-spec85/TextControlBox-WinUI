@@ -50,7 +50,13 @@ jobs:
               exit 0
           }
 
-          $tagObjectType = (git cat-file -t "refs/tags/${{ github.ref_name }}").Trim()
+          $tagRef = "refs/tags/${{ github.ref_name }}"
+          git fetch origin "+${tagRef}:${tagRef}" --no-tags --force
+          if ($LASTEXITCODE -ne 0) {
+              throw "Failed to restore annotated release tag '$tagRef'."
+          }
+
+          $tagObjectType = (git cat-file -t $tagRef).Trim()
           if ($LASTEXITCODE -ne 0 -or $tagObjectType -ne "tag") {
               throw "Release tag '${{ github.ref_name }}' must be an annotated tag so its annotation can be used as GitHub Release notes."
           }
