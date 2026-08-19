@@ -50,23 +50,21 @@ jobs:
               exit 0
           }
 
-          $tagRef = "refs/tags/${{ github.ref_name }}"
-          git fetch origin "+${tagRef}:${tagRef}" --no-tags --force
+          $taggedCommit = powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass `
+              -File ".\TextControlBox\Build\RestoreAnnotatedReleaseTag.ps1" `
+              -Tag "${{ github.ref_name }}"
+
           if ($LASTEXITCODE -ne 0) {
-              throw "Failed to restore annotated release tag '$tagRef'."
+              throw "Annotated release tag restore failed with exit code $LASTEXITCODE."
           }
 
-          $tagObjectType = (git cat-file -t $tagRef).Trim()
-          if ($LASTEXITCODE -ne 0 -or $tagObjectType -ne "tag") {
-              throw "Release tag '${{ github.ref_name }}' must be an annotated tag so its annotation can be used as GitHub Release notes."
-          }
+          $taggedCommit = "$taggedCommit".Trim()
 
           git fetch origin "refs/heads/master:refs/remotes/origin/master" --no-tags --force
           if ($LASTEXITCODE -ne 0) {
               throw "Failed to fetch public master."
           }
 
-          $taggedCommit = (git rev-parse HEAD).Trim()
           $masterCommit = (git rev-parse refs/remotes/origin/master).Trim()
           $version = powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass `
               -File ".\TextControlBox\Build\ResolveTextControlBoxRelease.ps1" `
@@ -83,7 +81,7 @@ jobs:
           "version=$version" >> $env:GITHUB_OUTPUT
           Write-Host "Validated release $version at $taggedCommit."
 
-      - name: Run release tag validator regression checks
+      - name: Run release workflow regression checks
         shell: pwsh
         run: |
           powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass `
@@ -91,6 +89,13 @@ jobs:
 
           if ($LASTEXITCODE -ne 0) {
               throw "Release tag validator regression checks failed with exit code $LASTEXITCODE."
+          }
+
+          powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass `
+              -File ".\TextControlBox.Tests\Build\RestoreAnnotatedReleaseTagTests.ps1"
+
+          if ($LASTEXITCODE -ne 0) {
+              throw "Annotated release tag restore regression checks failed with exit code $LASTEXITCODE."
           }
 
       - name: Restore x64 solution
@@ -217,6 +222,17 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Restore annotated release tag
+        shell: pwsh
+        run: |
+          powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass `
+              -File ".\TextControlBox\Build\RestoreAnnotatedReleaseTag.ps1" `
+              -Tag "${{ github.ref_name }}" | Out-Null
+
+          if ($LASTEXITCODE -ne 0) {
+              throw "Annotated release tag restore failed with exit code $LASTEXITCODE."
+          }
 
       - name: Download published package
         uses: actions/download-artifact@v4
