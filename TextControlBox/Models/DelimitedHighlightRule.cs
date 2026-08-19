@@ -8,7 +8,7 @@ namespace TextControlBoxNS;
 /// <summary>
 /// Highlights text enclosed by literal delimiters, including ranges that cross line boundaries.
 /// </summary>
-public sealed class DelimitedHighlightRule : IStatefulHighlightRule
+public sealed class DelimitedHighlightRule : IFragmentAwareStatefulHighlightRule
 {
     private const int OutsideRange = 0;
     private const int InsideRange = 1;
@@ -83,6 +83,28 @@ public sealed class DelimitedHighlightRule : IStatefulHighlightRule
 
     /// <inheritdoc/>
     public int InitialState => OutsideRange;
+
+    /// <inheritdoc/>
+    public int InferInitialState(ReadOnlySpan<string> lines)
+    {
+        if (string.Equals(startDelimiter, endDelimiter, comparison))
+            return InitialState;
+
+        foreach (string line in lines)
+        {
+            int startIndex = line.AsSpan().IndexOf(startDelimiter.AsSpan(), comparison);
+            int endIndex = line.AsSpan().IndexOf(endDelimiter.AsSpan(), comparison);
+
+            if (startIndex < 0 && endIndex < 0)
+                continue;
+
+            return endIndex >= 0 && (startIndex < 0 || endIndex < startIndex)
+                ? InsideRange
+                : OutsideRange;
+        }
+
+        return InitialState;
+    }
 
     /// <inheritdoc/>
     public int GetStateAfterLine(int lineNumber, ReadOnlySpan<char> line, int state)

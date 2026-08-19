@@ -22,6 +22,8 @@ namespace TextControlBoxNS.Core;
 
 internal sealed partial class CoreTextControlBox : UserControl
 {
+    public event EventHandler<SyntaxHighlightingRuleQuarantinedEventArgs> SyntaxHighlightingRuleQuarantined;
+
     public readonly SelectionRenderer selectionRenderer;
     public readonly FlyoutHelper flyoutHelper;
     public readonly TabSpaceManager tabSpaceManager;
@@ -77,6 +79,12 @@ internal sealed partial class CoreTextControlBox : UserControl
     public ScrollBar horizontalScrollBar;
     public ScrollBar verticalScrollBar;
 
+    static CoreTextControlBox()
+    {
+        foreach (SyntaxHighlightLanguage language in SyntaxHighlightings.Values)
+            language?.MarkAsBuiltIn();
+    }
+
     public CoreTextControlBox()
     {
         this.InitializeComponent();
@@ -116,6 +124,7 @@ internal sealed partial class CoreTextControlBox : UserControl
         documentChangeManager = new DocumentChangeManager();
         statefulSyntaxHighlightingManager = new StatefulSyntaxHighlightingManager();
         syntaxHighlightingSession = new SyntaxHighlightingSession();
+        syntaxHighlightingSession.RuleQuarantined += SyntaxHighlightingSession_RuleQuarantined;
         lineNumberRenderer = new LineNumberRenderer();
         zoomManager = new ZoomManager();
         focusManager = new FocusManager();
@@ -200,6 +209,13 @@ internal sealed partial class CoreTextControlBox : UserControl
         linkHighlightManager.Init(textRenderer, this, eventsManager);
         linkRenderer.Init(textRenderer, linkHighlightManager);
         editorBackgroundRenderer.Init(lineDecorationStore, lineGutterRenderer, textDecorationRenderer, textRenderer, lineHighlighterRenderer, textManager, cursorManager, scrollManager, zoomManager, focusManager, designHelper);
+    }
+
+    private void SyntaxHighlightingSession_RuleQuarantined(
+        object sender,
+        SyntaxHighlightingRuleQuarantinedEventArgs args)
+    {
+        SyntaxHighlightingRuleQuarantined?.Invoke(this, args);
     }
 
     public void InitialiseOnStart()
@@ -777,16 +793,19 @@ internal sealed partial class CoreTextControlBox : UserControl
 
     public void LoadText(string text, bool autodetectTabsSpaces = true)
     {
+        statefulSyntaxHighlightingManager.SetStateBoundaries([]);
         textActionManager.Safe_LoadText(text, autodetectTabsSpaces);
     }
 
     public void SetText(string text)
     {
+        statefulSyntaxHighlightingManager.SetStateBoundaries([]);
         textActionManager.Safe_SetText(text);
     }
 
     public void LoadLines(IEnumerable<string> lines, bool autodetectTabsSpaces = true, LineEnding lineEnding = LineEnding.CRLF)
     {
+        statefulSyntaxHighlightingManager.SetStateBoundaries([]);
         textActionManager.Safe_LoadLines(lines, autodetectTabsSpaces, lineEnding);
     }
 
@@ -923,6 +942,15 @@ internal sealed partial class CoreTextControlBox : UserControl
     public void ClearLineDecorations()
     {
         lineDecorationStore.Clear();
+    }
+
+    public void SetSyntaxHighlightingStateBoundaries(IEnumerable<int> lineIndices)
+    {
+        if (!statefulSyntaxHighlightingManager.SetStateBoundaries(lineIndices))
+            return;
+
+        textRenderer.NeedsUpdateTextLayout = true;
+        canvasUpdateManager.UpdateText();
     }
 
     public void SetLineGutterDecorations(
@@ -1223,6 +1251,11 @@ internal sealed partial class CoreTextControlBox : UserControl
         get => textManager._SyntaxHighlighting;
         set
         {
+            // Built-in definitions are shared and immutable within the control library.
+            if (ReferenceEquals(textManager._SyntaxHighlighting, value)
+                && value?.IsBuiltIn == true)
+                return;
+
             textManager._SyntaxHighlighting = value;
 
             if (textManager._SyntaxHighlighting != null)

@@ -12,7 +12,7 @@ namespace TextControlBoxNS;
 /// </summary>
 public class SyntaxHighlights
 {
-    internal static readonly TimeSpan RegexMatchTimeout = TimeSpan.FromMilliseconds(50);
+    internal static readonly TimeSpan ExternalRegexMatchTimeout = TimeSpan.FromMilliseconds(50);
     private readonly ColorConverter ColorConverter = new ColorConverter();
 
     /// <summary>
@@ -90,15 +90,35 @@ public class SyntaxHighlights
     [JsonIgnore]
     internal Regex PrecompiledRegex { get; private set; }
 
+    [JsonIgnore]
+    private string CompiledPattern { get; set; }
+
     // Initialize regex when setting the pattern
     internal void CompileRegex()
     {
-        if (!string.IsNullOrEmpty(Pattern))
+        CompileRegex(ExternalRegexMatchTimeout);
+    }
+
+    internal void CompileRegex(TimeSpan matchTimeout)
+    {
+        if (string.IsNullOrEmpty(Pattern))
         {
-            PrecompiledRegex = new Regex(
-                Pattern,
-                RegexOptions.Compiled | RegexOptions.Multiline,
-                RegexMatchTimeout);
+            PrecompiledRegex = null;
+            CompiledPattern = null;
+            return;
         }
+
+        if (PrecompiledRegex != null
+            && string.Equals(CompiledPattern, Pattern, StringComparison.Ordinal)
+            && PrecompiledRegex.MatchTimeout == matchTimeout)
+        {
+            return;
+        }
+
+        PrecompiledRegex = new Regex(
+            Pattern,
+            RegexOptions.Compiled | RegexOptions.Multiline,
+            matchTimeout);
+        CompiledPattern = Pattern;
     }
 }

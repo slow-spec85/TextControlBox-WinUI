@@ -1,4 +1,6 @@
 ﻿using Newtonsoft.Json;
+using System;
+using System.Text.RegularExpressions;
 using TextControlBoxNS.Models;
 
 namespace TextControlBoxNS;
@@ -8,6 +10,9 @@ namespace TextControlBoxNS;
 /// </summary>
 public class SyntaxHighlightLanguage
 {
+    [JsonIgnore]
+    internal bool IsBuiltIn { get; private set; }
+
     /// <summary>
     /// Gets or sets the name of the code language.
     /// </summary>
@@ -54,12 +59,33 @@ public class SyntaxHighlightLanguage
 
     internal void CompileAllRegex()
     {
-        if (Highlights == null) return;
+        TimeSpan matchTimeout = IsBuiltIn
+            ? Regex.InfiniteMatchTimeout
+            : SyntaxHighlights.ExternalRegexMatchTimeout;
 
-        foreach (var highlight in Highlights)
+        if (Highlights != null)
         {
-            highlight.CompileRegex();
+            foreach (SyntaxHighlights highlight in Highlights)
+            {
+                highlight.CompileRegex(matchTimeout);
+            }
         }
+
+        if (HighlightRules != null)
+        {
+            foreach (IHighlightRule rule in HighlightRules)
+            {
+                if (rule is RegexHighlightRule regexRule)
+                {
+                    regexRule.CompileRegex(matchTimeout);
+                }
+            }
+        }
+    }
+
+    internal void MarkAsBuiltIn()
+    {
+        IsBuiltIn = true;
     }
 
     /// <summary>

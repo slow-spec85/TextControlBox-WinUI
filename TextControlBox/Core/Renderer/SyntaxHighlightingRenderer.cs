@@ -3,7 +3,6 @@ using Microsoft.UI.Xaml;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using TextControlBoxNS.Models;
 using Windows.UI.Text;
 using static TextControlBoxNS.Core.Text.TextManager;
@@ -35,20 +34,14 @@ internal class SyntaxHighlightingRenderer
         {
             foreach (var rule in syntaxHighlightingLanguage.HighlightRules)
             {
-                if (session.IsQuarantined(rule))
-                    continue;
-
-                List<HighlightSpan> spans;
-                try
+                if (!session.TryGetHighlights(
+                    syntaxHighlightingLanguage,
+                    rule,
+                    lineSliceResult.Lines,
+                    lineSliceResult.Text,
+                    newLineCharacter,
+                    out List<HighlightSpan> spans))
                 {
-                    spans = rule.GetHighlights(
-                        lineSliceResult.Lines,
-                        lineSliceResult.Text,
-                        newLineCharacter);
-                }
-                catch (RegexMatchTimeoutException)
-                {
-                    session.Quarantine(rule);
                     continue;
                 }
 
@@ -60,9 +53,11 @@ internal class SyntaxHighlightingRenderer
         }
         else if (syntaxHighlightingLanguage?.Highlights != null)
         {
+            string text = lineSliceResult.Text;
+
             foreach (var highlight in syntaxHighlightingLanguage.Highlights)
             {
-                if (highlight.PrecompiledRegex == null || session.IsQuarantined(highlight))
+                if (highlight.PrecompiledRegex == null)
                     continue;
 
                 var fallbackColor = isLightTheme
@@ -73,9 +68,9 @@ internal class SyntaxHighlightingRenderer
                     isLightTheme,
                     fallbackColor);
 
-                try
+                session.TryExecute(syntaxHighlightingLanguage, highlight, () =>
                 {
-                    foreach (var match in highlight.PrecompiledRegex.EnumerateMatches(lineSliceResult.Text))
+                    foreach (var match in highlight.PrecompiledRegex.EnumerateMatches(text))
                     {
                         int index = match.Index;
                         int length = match.Length;
@@ -92,11 +87,7 @@ internal class SyntaxHighlightingRenderer
                                 drawnTextLayout.SetUnderline(index, length, true);
                         }
                     }
-                }
-                catch (RegexMatchTimeoutException)
-                {
-                    session.Quarantine(highlight);
-                }
+                });
             }
         }
 

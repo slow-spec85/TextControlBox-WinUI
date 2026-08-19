@@ -11,11 +11,18 @@ internal sealed class RegexHighlightRule : IHighlightRule
     public RegexHighlightRule(SyntaxHighlights highlight)
     {
         _highlight = highlight;
-        _highlight.CompileRegex();
+    }
+
+    internal void CompileRegex(TimeSpan matchTimeout)
+    {
+        _highlight.CompileRegex(matchTimeout);
     }
 
     public List<HighlightSpan> GetHighlights(ReadOnlySpan<string> lines, string text, string newLineCharacter)
     {
+        if (_highlight.PrecompiledRegex == null)
+            _highlight.CompileRegex();
+
         var highlights = new List<HighlightSpan>();
 
         foreach (Match match in _highlight.PrecompiledRegex.Matches(text))

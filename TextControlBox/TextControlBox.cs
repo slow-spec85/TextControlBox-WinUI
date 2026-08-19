@@ -65,10 +65,18 @@ public partial class TextControlBox : UserControl
         coreTextBox.eventsManager.LinkClicked += EventsManager_LinkClicked;
         coreTextBox.eventsManager.TabsSpacesChanged += EventsManager_TabsSpacesChanged;
         coreTextBox.eventsManager.LineEndingChanged += EventsManager_LineEndingChanged;
+        coreTextBox.SyntaxHighlightingRuleQuarantined += CoreTextBox_SyntaxHighlightingRuleQuarantined;
         this.Content = coreTextBox;
         base.ActualThemeChanged += TextControlBox_ActualThemeChanged;
 
         this.RequestedTheme = ElementTheme.Default;
+    }
+
+    private void CoreTextBox_SyntaxHighlightingRuleQuarantined(
+        object sender,
+        SyntaxHighlightingRuleQuarantinedEventArgs args)
+    {
+        SyntaxHighlightingRuleQuarantined?.Invoke(this, args);
     }
 
     /// <summary>
@@ -508,6 +516,26 @@ public partial class TextControlBox : UserControl
     }
 
     /// <summary>
+    /// Replaces the zero-based document lines that separate independent syntax fragments.
+    /// </summary>
+    /// <remarks>
+    /// A boundary line neither inherits nor propagates state from an
+    /// <see cref="IStatefulHighlightRule"/>. The fragment following a boundary uses an inferred
+    /// initial state when the rule implements <see cref="IFragmentAwareStatefulHighlightRule"/>;
+    /// other rules use <see cref="IStatefulHighlightRule.InitialState"/>. Passing an empty
+    /// collection restores normal continuous-document highlighting. Loading text clears all
+    /// boundaries.
+    /// </remarks>
+    /// <param name="lineIndices">The complete replacement set of boundary line indexes.</param>
+    /// <exception cref="ArgumentOutOfRangeException">
+    /// Thrown when a boundary is outside the current document line range.
+    /// </exception>
+    public void SetSyntaxHighlightingStateBoundaries(IEnumerable<int> lineIndices)
+    {
+        coreTextBox.SetSyntaxHighlightingStateBoundaries(lineIndices);
+    }
+
+    /// <summary>
     /// Adds or atomically replaces a named group of line gutter decorations.
     /// </summary>
     /// <remarks>
@@ -768,6 +796,7 @@ public partial class TextControlBox : UserControl
         coreTextBox.eventsManager.LinkClicked -= EventsManager_LinkClicked;
         coreTextBox.eventsManager.TabsSpacesChanged -= EventsManager_TabsSpacesChanged;
         coreTextBox.eventsManager.LineEndingChanged -= EventsManager_LineEndingChanged;
+        coreTextBox.SyntaxHighlightingRuleQuarantined -= CoreTextBox_SyntaxHighlightingRuleQuarantined;
 
         coreTextBox.Unload();
     }
@@ -1489,6 +1518,16 @@ public partial class TextControlBox : UserControl
     /// Occurs when the line ending style of the document changes.
     /// </summary>
     public event LineEndingChangedEvent LineEndingChanged;
+
+    /// <summary>
+    /// Occurs once when a syntax highlighting rule exceeds its regular expression match
+    /// timeout and is disabled for the current control session.
+    /// </summary>
+    /// <remarks>
+    /// The event is raised only for the first timeout of a rule. The rule remains quarantined
+    /// until the syntax highlighting definition is reset or replaced.
+    /// </remarks>
+    public event EventHandler<SyntaxHighlightingRuleQuarantinedEventArgs> SyntaxHighlightingRuleQuarantined;
 
     //static functions
     /// <summary>

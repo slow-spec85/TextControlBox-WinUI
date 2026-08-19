@@ -5,7 +5,7 @@ using TextControlBoxNS.Extensions;
 
 namespace TextControlBoxNS;
 
-internal sealed class CStyleCommentRule : IStatefulHighlightRule
+internal sealed class CStyleCommentRule : IFragmentAwareStatefulHighlightRule
 {
     private const int OutsideComment = 0;
     private const int InsideComment = 1;
@@ -40,6 +40,23 @@ internal sealed class CStyleCommentRule : IStatefulHighlightRule
     }
 
     public int InitialState => OutsideComment;
+
+    public int InferInitialState(ReadOnlySpan<string> lines)
+    {
+        int lexicalState = OutsideComment;
+        foreach (string line in lines)
+        {
+            if (TryInferInitialStateFromLine(
+                line.AsSpan(),
+                ref lexicalState,
+                out int initialState))
+            {
+                return initialState;
+            }
+        }
+
+        return InitialState;
+    }
 
     public int GetStateAfterLine(int lineNumber, ReadOnlySpan<char> line, int state)
     {
@@ -164,6 +181,137 @@ internal sealed class CStyleCommentRule : IStatefulHighlightRule
         }
 
         return OutsideComment;
+    }
+
+    private bool TryInferInitialStateFromLine(
+        ReadOnlySpan<char> line,
+        ref int lexicalState,
+        out int initialState)
+    {
+        int position = 0;
+
+        if (lexicalState == InsideVerbatimString)
+        {
+            position = FindVerbatimStringEnd(line, 0);
+            if (position < 0)
+            {
+                initialState = InitialState;
+                return false;
+            }
+
+            lexicalState = OutsideComment;
+        }
+        else if (lexicalState == InsideTemplateString)
+        {
+            position = FindEscapedStringEnd(line, 0, '`');
+            if (position < 0)
+            {
+                initialState = InitialState;
+                return false;
+            }
+
+            lexicalState = OutsideComment;
+        }
+        else if (lexicalState >= InsideRawStringOffset)
+        {
+            int quoteCount = lexicalState - InsideRawStringOffset;
+            position = FindRawStringEnd(line, 0, quoteCount);
+            if (position < 0)
+            {
+                initialState = InitialState;
+                return false;
+            }
+
+            lexicalState = OutsideComment;
+        }
+
+        while (position < line.Length)
+        {
+            char character = line[position];
+            if (character == '/' && position + 1 < line.Length)
+            {
+                char nextCharacter = line[position + 1];
+                if (nextCharacter == '*')
+                {
+                    initialState = OutsideComment;
+                    return true;
+                }
+
+                if (supportsLineComments && nextCharacter == '/')
+                    break;
+            }
+
+            if (character == '*' && position + 1 < line.Length && line[position + 1] == '/')
+            {
+                initialState = InsideComment;
+                return true;
+            }
+
+            if (supportsHashLineComments && character == '#')
+                break;
+
+            if (character == '"')
+            {
+                int quoteCount = CountConsecutiveCharacters(line, position, '"');
+                if (supportsRawStrings && quoteCount >= 3)
+                {
+                    position = FindRawStringEnd(line, position + quoteCount, quoteCount);
+                    if (position < 0)
+                    {
+                        lexicalState = InsideRawStringOffset + quoteCount;
+                        initialState = InitialState;
+                        return false;
+                    }
+
+                    continue;
+                }
+
+                if (supportsVerbatimStrings && IsVerbatimStringStart(line, position))
+                {
+                    position = FindVerbatimStringEnd(line, position + 1);
+                    if (position < 0)
+                    {
+                        lexicalState = InsideVerbatimString;
+                        initialState = InitialState;
+                        return false;
+                    }
+
+                    continue;
+                }
+
+                position = FindEscapedStringEnd(line, position + 1, character);
+                if (position < 0)
+                    break;
+                continue;
+            }
+
+            if (character == '\'')
+            {
+                position = FindEscapedStringEnd(line, position + 1, character);
+                if (position < 0)
+                    break;
+                continue;
+            }
+
+            if (supportsBacktickStrings && character == '`')
+            {
+                position = FindEscapedStringEnd(line, position + 1, character);
+                if (position < 0)
+                {
+                    lexicalState = InsideTemplateString;
+                    initialState = InitialState;
+                    return false;
+                }
+
+                continue;
+            }
+
+            position++;
+        }
+
+        lexicalState = OutsideComment;
+        initialState = InitialState;
+        return false;
     }
 
     private int ScanComment(

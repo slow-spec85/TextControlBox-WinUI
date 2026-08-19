@@ -203,6 +203,22 @@ public class SyntaxHighlightPaletteTests
     }
 
     [TestMethod]
+    [DataRow(SyntaxHighlightID.Html)]
+    [DataRow(SyntaxHighlightID.XML)]
+    public void MarkupComments_AreHandledOnlyByStatefulRules(SyntaxHighlightID languageId)
+    {
+        SyntaxHighlightLanguage language =
+            CoreTextControlBox.GetSyntaxHighlightingFromID(languageId);
+
+        Assert.IsTrue(
+            language.StatefulHighlightRules.Any(rule => rule is DelimitedHighlightRule),
+            $"{languageId} comments must be handled by a stateful delimiter rule.");
+        Assert.IsFalse(
+            language.Highlights.Any(highlight => highlight.Role == SyntaxHighlightRole.Comment),
+            $"{languageId} must not duplicate multi-line comments with a viewport-wide regex rule.");
+    }
+
+    [TestMethod]
     public void CSharpControlFlowKeywords_AreClassifiedAsControlFlow()
     {
         string[] keywords =

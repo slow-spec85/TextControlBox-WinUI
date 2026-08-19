@@ -136,6 +136,7 @@ of 20 characters consumed about 20 GB and showed intermittent pauses.
 |**Marker and label tracking**|Assuming gutter markers or custom line-number labels follow document edits|Rebuild these projections after relevant `DocumentChanged` batches|Their indexes are owned by the consumer because the control cannot infer application semantics.|
 |**Overview bars and minimaps**|Adding interactive controls to the virtualized line marker gutter|Put interactive UI in `RightGutterContent`; use line gutter decorations for lightweight non-interactive markers|The right content slot is outside the text viewport and before the vertical scrollbar.|
 |**Multi-line syntax**|Expressing viewport-spanning constructs only as regex rules|Add an `IStatefulHighlightRule`, or use `DelimitedHighlightRule` for literal non-nesting delimiters|Rules must be deterministic and must not store document-specific state in shared language instances.|
+|**Discontinuous projections**|Letting multi-line state flow through diff headers or omitted source ranges|Call `SetSyntaxHighlightingStateBoundaries(...)` with separator-line indexes|Boundary lines are isolated. Fragment-aware rules infer the state of the following visible fragment; other rules restart from `InitialState`.|
 |**Syntax colors**|Mutating colors on a language object from the static `SyntaxHighlightings` dictionary for one editor|Set `SyntaxHighlightPalette` on that `TextControlBox` instance|Built-in language objects can be shared; palettes are isolated per control and preserve fallback colors for omitted roles.|
 |**Read-only mode**|Expecting `IsReadOnly` to block all programmatic changes|Guard application commands explicitly when required|Read-only mode blocks user editing and selected edit commands; load and several programmatic line APIs intentionally remain available.|
 
@@ -292,6 +293,18 @@ textBox.SyntaxHighlighting = language;
 State is cached per editor and recalculated incrementally after document changes; only visible
 lines produce highlight spans. `DelimitedHighlightRule` handles literal, non-nesting delimiters.
 Grammar-aware languages can implement `IStatefulHighlightRule` directly.
+
+Projected documents such as unified diffs can isolate service or separator lines from surrounding
+syntax state:
+
+```csharp
+textBox.SetSyntaxHighlightingStateBoundaries([4, 18, 37]);
+```
+
+A boundary line neither inherits nor propagates state. `DelimitedHighlightRule` and the built-in
+C-style comment rule infer whether the next visible fragment begins inside a construct when its
+first significant delimiter is a closing delimiter. Custom rules can opt into the same behavior by
+implementing `IFragmentAwareStatefulHighlightRule`. Loading another document clears all boundaries.
 
 ### Semantic syntax palettes
 
@@ -471,6 +484,7 @@ canvas so they scroll and invalidate as a single frame.
 |`TabsSpacesChanged`|Raised when detected or configured indentation settings change.|
 |`LineEndingChanged`|Raised when the document line-ending mode changes.|
 |`LinkClicked`|Raised with the URL when a highlighted link is clicked.|
+|`SyntaxHighlightingRuleQuarantined`|Raised once when a syntax rule exceeds its regex timeout and is disabled for the current control session. Event arguments include the language, rule, pattern, timeout, input length, and original exception.|
 
 ## 🎨 Syntax highlighting
 

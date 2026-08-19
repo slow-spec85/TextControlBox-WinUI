@@ -28,6 +28,9 @@
 			Added universal line, gutter, and text-range decorations with viewport-aware rendering.
 			Added incremental document change notifications and stateful multi-line syntax highlighting.
 			Added per-control semantic syntax palettes and configurable editor layout extensions.
+			Added detailed diagnostics when a syntax highlighting rule is quarantined after a regex timeout.
+			Added fragment-aware state boundaries for syntax highlighting in diffs and other projections.
+			Removed overlapping viewport-wide regex rules for HTML and XML comments.
 		</PackageReleaseNotes>
 		<PackageIcon>Icon1.png</PackageIcon>
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>

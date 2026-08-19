@@ -122,6 +122,81 @@ public class StatefulSyntaxHighlightingTests
         Assert.AreEqual(rule.InitialState, state);
     }
 
+    [TestMethod]
+    public void CStyleCommentRule_FragmentInference_IgnoresClosingDelimiterInString()
+    {
+        var rule = new CStyleCommentRule(
+            "#112233",
+            "#445566",
+            supportsVerbatimStrings: true,
+            supportsRawStrings: true);
+
+        int state = rule.InferInitialState(
+            ["string value = \"*/\";", "var raw = \"\"\"*/\"\"\";", "plain"]);
+
+        Assert.AreEqual(rule.InitialState, state);
+    }
+
+    [UITestMethod]
+    public void FragmentBoundary_HighlightsOpeningAndClosingCommentParts()
+    {
+        TestContext context = CreateXmlCommentContext(
+            "<!-- upper", "@@ -1 +10 @@", "lower -->", "<data />");
+        SyntaxHighlightLanguage language = CreateLanguage(context.Rule);
+        context.Manager.SetStateBoundaries([1]);
+
+        IReadOnlyList<HighlightSpan> highlights = context.Manager.GetHighlights(
+            language,
+            0,
+            context.TextManager.totalLines.Span,
+            "\n");
+
+        int lowerStart = "<!-- upper\n@@ -1 +10 @@\n".Length;
+        Assert.HasCount(2, highlights);
+        Assert.AreEqual((0, "<!-- upper".Length),
+            (highlights[0].Start, highlights[0].Length));
+        Assert.AreEqual((lowerStart, "lower -->".Length),
+            (highlights[1].Start, highlights[1].Length));
+    }
+
+    [UITestMethod]
+    public void FragmentBoundary_InferCommentFromClosingDelimiter()
+    {
+        TestContext context = CreateXmlCommentContext(
+            "plain", "@@ -1 +10 @@", "inside --> tail", "<data />");
+        SyntaxHighlightLanguage language = CreateLanguage(context.Rule);
+        context.Manager.SetStateBoundaries([1]);
+
+        IReadOnlyList<HighlightSpan> highlights = context.Manager.GetHighlights(
+            language,
+            0,
+            context.TextManager.totalLines.Span,
+            "\n");
+
+        Assert.HasCount(1, highlights);
+        Assert.AreEqual("plain\n@@ -1 +10 @@\n".Length, highlights[0].Start);
+        Assert.AreEqual("inside -->".Length, highlights[0].Length);
+    }
+
+    [UITestMethod]
+    public void FragmentBoundary_DoesNotCarryCommentWhenClosingDelimiterWasOmitted()
+    {
+        TestContext context = CreateXmlCommentContext(
+            "<!-- upper", "@@ -1 +10 @@", "<data />", "<value />");
+        SyntaxHighlightLanguage language = CreateLanguage(context.Rule);
+        context.Manager.SetStateBoundaries([1]);
+
+        IReadOnlyList<HighlightSpan> highlights = context.Manager.GetHighlights(
+            language,
+            0,
+            context.TextManager.totalLines.Span,
+            "\n");
+
+        Assert.HasCount(1, highlights);
+        Assert.AreEqual((0, "<!-- upper".Length),
+            (highlights[0].Start, highlights[0].Length));
+    }
+
     [UITestMethod]
     public void ViewportStartingInsideRange_HighlightsFromFirstCharacter()
     {
@@ -268,6 +343,17 @@ public class StatefulSyntaxHighlightingTests
     private static TestContext CreateContext(params string[] lines)
     {
         var rule = new DelimitedHighlightRule("/*", "*/", "#112233", "#445566");
+        return CreateContext(rule, lines);
+    }
+
+    private static TestContext CreateXmlCommentContext(params string[] lines)
+    {
+        var rule = new DelimitedHighlightRule(
+            "<!--",
+            "-->",
+            "#112233",
+            "#445566",
+            role: SyntaxHighlightRole.Comment);
         return CreateContext(rule, lines);
     }
 

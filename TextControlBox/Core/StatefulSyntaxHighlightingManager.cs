@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TextControlBoxNS.Core.Text;
 using TextControlBoxNS.Models;
 
@@ -9,12 +10,14 @@ internal sealed class StatefulSyntaxHighlightingManager
 {
     private static readonly IStatefulHighlightRule[] EmptyRules = [];
     private readonly List<string> cachedLineTexts = [];
+    private readonly Dictionary<int, int[]> inferredStatesByFragmentStart = [];
     private readonly List<HighlightSpan> lineHighlights = [];
     private TextManager textManager;
     private SyntaxHighlightingSession session;
     private SyntaxHighlightLanguage language;
     private IStatefulHighlightRule[] rules = EmptyRules;
     private List<int>[] statesAfterByRule = [];
+    private int[] stateBoundaryLines = [];
     private int invalidFromLine = -1;
 
     public long Revision { get; private set; }
@@ -54,7 +57,7 @@ internal sealed class StatefulSyntaxHighlightingManager
             {
                 lineHighlights.Clear();
                 IStatefulHighlightRule rule = rules[ruleIndex];
-                bool completed = session.TryExecute(rule, () => rule.GetHighlights(
+                bool completed = session.TryExecute(syntaxLanguage, rule, () => rule.GetHighlights(
                     documentLine,
                     line.AsSpan(),
                     GetStateBefore(documentLine, ruleIndex),
@@ -98,12 +101,34 @@ internal sealed class StatefulSyntaxHighlightingManager
     {
         language = syntaxLanguage;
         rules = syntaxLanguage?.StatefulHighlightRules ?? EmptyRules;
-        cachedLineTexts.Clear();
         statesAfterByRule = new List<int>[rules.Length];
         for (int ruleIndex = 0; ruleIndex < rules.Length; ruleIndex++)
             statesAfterByRule[ruleIndex] = [];
-        invalidFromLine = -1;
+        ClearCachedStates();
         Revision = checked(Revision + 1);
+    }
+
+    public bool SetStateBoundaries(IEnumerable<int> lineIndices)
+    {
+        ArgumentNullException.ThrowIfNull(lineIndices);
+
+        int[] requestedLines = lineIndices
+            .Distinct()
+            .Order()
+            .ToArray();
+        if (requestedLines.Any(line => line < 0 || line >= textManager.LinesCount))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(lineIndices),
+                "Syntax highlighting state boundaries must reference existing document lines.");
+        }
+        if (stateBoundaryLines.SequenceEqual(requestedLines))
+            return false;
+
+        stateBoundaryLines = requestedLines;
+        ClearCachedStates();
+        Revision = checked(Revision + 1);
+        return true;
     }
 
     private void UseLanguage(SyntaxHighlightLanguage syntaxLanguage)
@@ -115,6 +140,16 @@ internal sealed class StatefulSyntaxHighlightingManager
 
     private void OnDocumentChanged(DocumentChangedEventArgs args)
     {
+        if (stateBoundaryLines.Length > 0)
+        {
+            foreach (DocumentChange change in args.Changes)
+                AdjustStateBoundaries(change);
+
+            ClearCachedStates();
+            Revision = checked(Revision + 1);
+            return;
+        }
+
         bool cachedStateAffected = false;
         foreach (DocumentChange change in args.Changes)
             cachedStateAffected |= ApplyChange(change);
@@ -193,7 +228,7 @@ internal sealed class StatefulSyntaxHighlightingManager
         {
             IStatefulHighlightRule rule = rules[ruleIndex];
             int stateAfter = rule.InitialState;
-            session.TryExecute(rule, () => stateAfter = rule.GetStateAfterLine(
+            session.TryExecute(language, rule, () => stateAfter = rule.GetStateAfterLine(
                 lineNumber,
                 text.AsSpan(),
                 GetStateBefore(lineNumber, ruleIndex)));
@@ -211,7 +246,7 @@ internal sealed class StatefulSyntaxHighlightingManager
         {
             IStatefulHighlightRule rule = rules[ruleIndex];
             int stateAfter = rule.InitialState;
-            session.TryExecute(rule, () => stateAfter = rule.GetStateAfterLine(
+            session.TryExecute(language, rule, () => stateAfter = rule.GetStateAfterLine(
                 lineNumber,
                 text.AsSpan(),
                 GetStateBefore(lineNumber, ruleIndex)));
@@ -228,8 +263,101 @@ internal sealed class StatefulSyntaxHighlightingManager
         if (session.IsQuarantined(rules[ruleIndex]))
             return rules[ruleIndex].InitialState;
 
-        return lineNumber == 0
-            ? rules[ruleIndex].InitialState
-            : statesAfterByRule[ruleIndex][lineNumber - 1];
+        if (lineNumber == 0 || IsStateBoundary(lineNumber))
+            return rules[ruleIndex].InitialState;
+
+        if (IsStateBoundary(lineNumber - 1))
+            return GetInferredFragmentState(lineNumber, ruleIndex);
+
+        return statesAfterByRule[ruleIndex][lineNumber - 1];
+    }
+
+    private int GetInferredFragmentState(int fragmentStartLine, int ruleIndex)
+    {
+        if (!inferredStatesByFragmentStart.TryGetValue(
+            fragmentStartLine,
+            out int[] inferredStates))
+        {
+            inferredStates = new int[rules.Length];
+            int fragmentEndLine = FindNextStateBoundary(fragmentStartLine);
+            ReadOnlySpan<string> fragmentLines = textManager.totalLines.Span.Slice(
+                fragmentStartLine,
+                Math.Max(0, fragmentEndLine - fragmentStartLine));
+
+            for (int index = 0; index < rules.Length; index++)
+            {
+                IStatefulHighlightRule rule = rules[index];
+                inferredStates[index] = rule.InitialState;
+                if (rule is IFragmentAwareStatefulHighlightRule fragmentAwareRule)
+                {
+                    session.TryInferInitialState(
+                        language,
+                        fragmentAwareRule,
+                        fragmentLines,
+                        out inferredStates[index]);
+                }
+            }
+
+            inferredStatesByFragmentStart.Add(fragmentStartLine, inferredStates);
+        }
+
+        return inferredStates[ruleIndex];
+    }
+
+    private int FindNextStateBoundary(int lineNumber)
+    {
+        int index = Array.BinarySearch(stateBoundaryLines, lineNumber);
+        if (index < 0)
+            index = ~index;
+
+        return index < stateBoundaryLines.Length
+            ? Math.Min(stateBoundaryLines[index], textManager.LinesCount)
+            : textManager.LinesCount;
+    }
+
+    private bool IsStateBoundary(int lineNumber)
+    {
+        return Array.BinarySearch(stateBoundaryLines, lineNumber) >= 0;
+    }
+
+    private void AdjustStateBoundaries(DocumentChange change)
+    {
+        int removedEnd = checked(change.StartLine + change.RemovedLineCount);
+        int lineDelta = change.InsertedLineCount - change.RemovedLineCount;
+        var adjustedLines = new List<int>(stateBoundaryLines.Length);
+
+        foreach (int boundaryLine in stateBoundaryLines)
+        {
+            if (boundaryLine < change.StartLine)
+            {
+                adjustedLines.Add(boundaryLine);
+            }
+            else if (boundaryLine >= removedEnd)
+            {
+                adjustedLines.Add(checked(boundaryLine + lineDelta));
+            }
+            else if (change.InsertedLineCount > 0)
+            {
+                int relativeLine = boundaryLine - change.StartLine;
+                adjustedLines.Add(change.StartLine + Math.Min(
+                    relativeLine,
+                    change.InsertedLineCount - 1));
+            }
+        }
+
+        stateBoundaryLines = adjustedLines
+            .Where(line => line >= 0 && line < textManager.LinesCount)
+            .Distinct()
+            .Order()
+            .ToArray();
+    }
+
+    private void ClearCachedStates()
+    {
+        cachedLineTexts.Clear();
+        foreach (List<int> statesAfter in statesAfterByRule)
+            statesAfter.Clear();
+        inferredStatesByFragmentStart.Clear();
+        invalidFromLine = -1;
     }
 }

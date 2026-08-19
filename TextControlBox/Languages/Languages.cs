@@ -272,8 +272,10 @@ namespace TextControlBoxNS.Languages
                 new SyntaxHighlights("\\b(async|await|break|case|catch|continue|default|do|else|finally|for|foreach|goto|if|return|switch|throw|try|when|while|yield)\\b", "#9922ff", "#6666ff", role: SyntaxHighlightRole.ControlFlow),
                         
                 //Preprocessor Directives
-                new SyntaxHighlights("#region.*$", "#ff0000", "#ff0000", true, role: SyntaxHighlightRole.Directive),
-                new SyntaxHighlights("#endregion", "#ff0000", "#ff0000", true, role: SyntaxHighlightRole.Directive),
+                new SyntaxHighlights(
+                    @"^[^\S\r\n]*#[^\S\r\n]*(?:region|endregion)\b[^\r\n]*",
+                    "#ff0000", "#ff0000", true,
+                    role: SyntaxHighlightRole.Directive),
             
                 //String Literals
                 new SyntaxHighlights("@\".*?\"|\"(?:\\\\.|[^\"\\\\])*\"", "#ff5500", "#00FF00", role: SyntaxHighlightRole.String),
@@ -371,7 +373,6 @@ namespace TextControlBoxNS.Languages
                 new SyntaxHighlights("\"[^\\n]*?\"", "#00CA00", "#00FF00", role: SyntaxHighlightRole.String),
                 new SyntaxHighlights("'[^\\n]*?'", "#00CA00", "#00FF00", role: SyntaxHighlightRole.String),
                 new SyntaxHighlights("[0-9]+(px|rem|em|vh|vw|px|pt|pc|in|mm|cm|deg|%)", "#ff00ff", "#dd00dd", role: SyntaxHighlightRole.Number),
-                new SyntaxHighlights("<!--[\\s\\S]*?-->", "#888888", "#888888", role: SyntaxHighlightRole.Comment),
             };
         }
     }
@@ -571,8 +572,6 @@ namespace TextControlBoxNS.Languages
                 //Single-quoted attribute values
                 new SyntaxHighlights("'[^\n]*?'", "#00CA00", "#00FF00", role: SyntaxHighlightRole.String),
             
-                //Comments
-                new SyntaxHighlights("<!--[\\s\\S]*?-->", "#888888", "#888888", role: SyntaxHighlightRole.Comment),
             };
         }
     }
