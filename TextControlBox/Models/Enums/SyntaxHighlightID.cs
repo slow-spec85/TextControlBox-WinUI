@@ -80,6 +80,51 @@ public enum SyntaxHighlightID
     Javascript,
 
     /// <summary>
+    /// Identifier for Go code language.
+    /// </summary>
+    Go,
+
+    /// <summary>
+    /// Identifier for Visual Basic .NET code language.
+    /// </summary>
+    VisualBasic,
+
+    /// <summary>
+    /// Identifier for Visual Basic for Applications code language.
+    /// </summary>
+    VBA,
+
+    /// <summary>
+    /// Identifier for Bash shell scripts.
+    /// </summary>
+    Bash,
+
+    /// <summary>
+    /// Identifier for PowerShell scripts.
+    /// </summary>
+    PowerShell,
+
+    /// <summary>
+    /// Identifier for Rust code language.
+    /// </summary>
+    Rust,
+
+    /// <summary>
+    /// Identifier for YAML documents.
+    /// </summary>
+    YAML,
+
+    /// <summary>
+    /// Identifier for Dockerfiles.
+    /// </summary>
+    Dockerfile,
+
+    /// <summary>
+    /// Identifier for HashiCorp Configuration Language.
+    /// </summary>
+    HCL,
+
+    /// <summary>
     /// Identifier for JSON code language.
     /// </summary>
     Json,

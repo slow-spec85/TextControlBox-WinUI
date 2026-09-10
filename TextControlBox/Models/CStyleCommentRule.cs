@@ -12,12 +12,14 @@ internal sealed class CStyleCommentRule : IFragmentAwareStatefulHighlightRule
     private const int InsideVerbatimString = 2;
     private const int InsideTemplateString = 3;
     private const int InsideRawStringOffset = 4;
+    private const int InsideRawBacktickString = -1;
 
     private readonly Windows.UI.Color colorLight;
     private readonly Windows.UI.Color colorDark;
     private readonly bool supportsLineComments;
     private readonly bool supportsHashLineComments;
     private readonly bool supportsBacktickStrings;
+    private readonly bool supportsRawBacktickStrings;
     private readonly bool supportsVerbatimStrings;
     private readonly bool supportsRawStrings;
 
@@ -27,6 +29,7 @@ internal sealed class CStyleCommentRule : IFragmentAwareStatefulHighlightRule
         bool supportsLineComments = true,
         bool supportsHashLineComments = false,
         bool supportsBacktickStrings = false,
+        bool supportsRawBacktickStrings = false,
         bool supportsVerbatimStrings = false,
         bool supportsRawStrings = false)
     {
@@ -35,6 +38,7 @@ internal sealed class CStyleCommentRule : IFragmentAwareStatefulHighlightRule
         this.supportsLineComments = supportsLineComments;
         this.supportsHashLineComments = supportsHashLineComments;
         this.supportsBacktickStrings = supportsBacktickStrings;
+        this.supportsRawBacktickStrings = supportsRawBacktickStrings;
         this.supportsVerbatimStrings = supportsVerbatimStrings;
         this.supportsRawStrings = supportsRawStrings;
     }
@@ -97,6 +101,12 @@ internal sealed class CStyleCommentRule : IFragmentAwareStatefulHighlightRule
             position = FindEscapedStringEnd(line, 0, '`');
             if (position < 0)
                 return InsideTemplateString;
+        }
+        else if (state == InsideRawBacktickString)
+        {
+            position = FindRawBacktickStringEnd(line, 0);
+            if (position < 0)
+                return InsideRawBacktickString;
         }
         else if (state >= InsideRawStringOffset)
         {
@@ -169,6 +179,14 @@ internal sealed class CStyleCommentRule : IFragmentAwareStatefulHighlightRule
                 continue;
             }
 
+            if (supportsRawBacktickStrings && character == '`')
+            {
+                position = FindRawBacktickStringEnd(line, position + 1);
+                if (position < 0)
+                    return InsideRawBacktickString;
+                continue;
+            }
+
             if (supportsBacktickStrings && character == '`')
             {
                 position = FindEscapedStringEnd(line, position + 1, character);
@@ -204,6 +222,17 @@ internal sealed class CStyleCommentRule : IFragmentAwareStatefulHighlightRule
         else if (lexicalState == InsideTemplateString)
         {
             position = FindEscapedStringEnd(line, 0, '`');
+            if (position < 0)
+            {
+                initialState = InitialState;
+                return false;
+            }
+
+            lexicalState = OutsideComment;
+        }
+        else if (lexicalState == InsideRawBacktickString)
+        {
+            position = FindRawBacktickStringEnd(line, 0);
             if (position < 0)
             {
                 initialState = InitialState;
@@ -290,6 +319,19 @@ internal sealed class CStyleCommentRule : IFragmentAwareStatefulHighlightRule
                 position = FindEscapedStringEnd(line, position + 1, character);
                 if (position < 0)
                     break;
+                continue;
+            }
+
+            if (supportsRawBacktickStrings && character == '`')
+            {
+                position = FindRawBacktickStringEnd(line, position + 1);
+                if (position < 0)
+                {
+                    lexicalState = InsideRawBacktickString;
+                    initialState = InitialState;
+                    return false;
+                }
+
                 continue;
             }
 
@@ -394,6 +436,12 @@ internal sealed class CStyleCommentRule : IFragmentAwareStatefulHighlightRule
         }
 
         return -1;
+    }
+
+    private static int FindRawBacktickStringEnd(ReadOnlySpan<char> line, int position)
+    {
+        int relativeEnd = line[position..].IndexOf('`');
+        return relativeEnd < 0 ? -1 : position + relativeEnd + 1;
     }
 
     private static int FindRawStringEnd(

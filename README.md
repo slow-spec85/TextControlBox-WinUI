@@ -489,8 +489,9 @@ canvas so they scroll and invalidate as a single frame.
 ## 🎨 Syntax highlighting
 
 Built-in definitions include x86 Assembly, Batch, C++, C#, CSS, CSV, G-Code, Gitignore, Hex,
-HTML, INI/Klipper configuration, Java, JavaScript, JSON, LaTeX, Lua, Markdown, PHP, Python, Q#,
-SQL, TOML, and XML.
+Dockerfile, Go, HCL, HTML, INI/Klipper configuration, Java, JavaScript, JSON, LaTeX, Lua,
+Markdown, PHP, PowerShell, Python, Q#, Rust, Shell/Bash, SQL, TOML, Visual Basic .NET,
+Visual Basic for Applications, XML, and YAML.
 
 ```csharp
 textBox.SelectSyntaxHighlightingById(SyntaxHighlightID.CSharp);
