@@ -1,26 +1,25 @@
 ﻿using TextControlBoxNS.Core.Text;
 
-namespace TextControlBoxNS.Core.Renderer
+namespace TextControlBoxNS.Core.Renderer;
+
+internal class LinkRenderer
 {
-    internal class LinkRenderer
+    private TextRenderer textRenderer;
+    private LinkHighlightManager linkHighlightManager;
+
+    public void Init(TextRenderer textRenderer, LinkHighlightManager linkHighlightManager)
     {
-        private TextRenderer textRenderer;
-        private LinkHighlightManager linkHighlightManager;
+        this.textRenderer = textRenderer;
+        this.linkHighlightManager = linkHighlightManager;
+    }
 
-        public void Init(TextRenderer textRenderer, LinkHighlightManager linkHighlightManager)
+    public void HighlightLinks()
+    {
+        foreach (var link in linkHighlightManager.links)
         {
-            this.textRenderer = textRenderer;
-            this.linkHighlightManager = linkHighlightManager;
-        }
-
-        public void HighlightLinks()
-        {
-            foreach (var link in linkHighlightManager.links)
-            {
-                textRenderer.DrawnTextLayout.SetUnderline(
-                    link.StartIndex,
-                    link.Length, true);
-            }
+            textRenderer.DrawnTextLayout.SetUnderline(
+                link.StartIndex,
+                link.Length, true);
         }
     }
 }

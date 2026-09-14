@@ -1,859 +1,1227 @@
 using TextControlBoxNS.Models;
 
-namespace TextControlBoxNS.Languages
+namespace TextControlBoxNS.Languages;
+
+internal class Batch : SyntaxHighlightLanguage
 {
-    internal class Batch : SyntaxHighlightLanguage
+    public Batch()
     {
-        public Batch()
+        this.Name = "Batch";
+        this.Author = "Julius Kirsch";
+        this.Filter = new string[1] { ".bat" };
+        this.Description = "Syntax highlighting for Batch language";
+        this.Highlights = new SyntaxHighlights[]
         {
-            this.Name = "Batch";
-            this.Author = "Julius Kirsch";
-            this.Filter = new string[1] { ".bat" };
-            this.Description = "Syntax highlighting for Batch language";
-            this.Highlights = new SyntaxHighlights[]
-            {
-                new SyntaxHighlights("\\b([+-]?(?=\\.\\d|\\d)(?:\\d+)?(?:\\.?\\d*))(?:[eE]([+-]?\\d+))?\\b", "#dd00dd", "#ff00ff", role: SyntaxHighlightRole.Number),
-                new SyntaxHighlights("(?i)(set|echo|for|pushd|popd|pause|exit|cd|if|else|goto|del)\\s", "#dd00dd", "#dd00dd", role: SyntaxHighlightRole.Keyword),
-                new SyntaxHighlights("(:.*)", "#00C000", "#ffff00", role: SyntaxHighlightRole.Label),
-                new SyntaxHighlights("(\\\".+?\\\"|\\'.+?\\')", "#00C000", "#ffff00", role: SyntaxHighlightRole.String),
-                new SyntaxHighlights("(@|%)", "#dd0077", "#dd0077", role: SyntaxHighlightRole.Variable),
-                new SyntaxHighlights("(\\*)", "#dd0077", "#dd0077", role: SyntaxHighlightRole.Operator),
-                new SyntaxHighlights("((?i)rem.*)", "#888888", "#888888", role: SyntaxHighlightRole.Comment),
-            };
-        }
+            new SyntaxHighlights("\\b([+-]?(?=\\.\\d|\\d)(?:\\d+)?(?:\\.?\\d*))(?:[eE]([+-]?\\d+))?\\b", "#dd00dd", "#ff00ff", role: SyntaxHighlightRole.Number),
+            new SyntaxHighlights("(?i)(set|echo|for|pushd|popd|pause|exit|cd|if|else|goto|del)\\s", "#dd00dd", "#dd00dd", role: SyntaxHighlightRole.Keyword),
+            new SyntaxHighlights("(:.*)", "#00C000", "#ffff00", role: SyntaxHighlightRole.Label),
+            new SyntaxHighlights("(\\\".+?\\\"|\\'.+?\\')", "#00C000", "#ffff00", role: SyntaxHighlightRole.String),
+            new SyntaxHighlights("(@|%)", "#dd0077", "#dd0077", role: SyntaxHighlightRole.Variable),
+            new SyntaxHighlights("(\\*)", "#dd0077", "#dd0077", role: SyntaxHighlightRole.Operator),
+            new SyntaxHighlights("((?i)rem.*)", "#888888", "#888888", role: SyntaxHighlightRole.Comment),
+        };
     }
-    internal class IniHighlighter : SyntaxHighlightLanguage
+}
+internal class IniHighlighter : SyntaxHighlightLanguage
+{
+    public IniHighlighter()
     {
-        public IniHighlighter()
+        this.Name = "INI";
+        this.Filter = new[] { ".ini" };
+        this.Description = "Syntax highlighting for INI configuration files";
+        this.AutoPairingPair = new AutoPairingPair[]
         {
-            this.Name = "INI";
-            this.Filter = new[] { ".ini" };
-            this.Description = "Syntax highlighting for INI configuration files";
-            this.AutoPairingPair = new AutoPairingPair[]
-            {
-            new AutoPairingPair("[", "]")
-            };
-            this.Highlights = new SyntaxHighlights[]
-            {
-            // Section names [section_name]
-            new SyntaxHighlights(@"(?<=\[)[^\]]+(?=\])", "#7C4DFF", "#B890FF", role: SyntaxHighlightRole.Key),
-            
-            // Brackets [ and ]
-            new SyntaxHighlights(@"\[|\]", "#5C6BC0", "#9FA8DA", role: SyntaxHighlightRole.Punctuation),
-            
-            // Keys before = (supports spaces in keys)
-            new SyntaxHighlights(@"(?m)^\s*([^=;\[\]#]+?)(?=\s*=)", "#E65100", "#FFB74D", role: SyntaxHighlightRole.Key),
-            
-            // String values (quoted)
-            new SyntaxHighlights(@"(?<=[:=]\s*)([""'])(.*?)(\1)", "#00796B", "#80CBC4", role: SyntaxHighlightRole.String),
-            
-            // Numeric values
-            new SyntaxHighlights(@"\b(?:0[xX][0-9A-Fa-f]+(?:_[0-9A-Fa-f]+)*|0[bB][01]+(?:_[01]+)*|\d+(?:_\d+)*\.\d*(?:_\d*)?(?:[eE][+-]?\d+(?:_\d+)*)?|\.\d+(?:_\d*)?(?:[eE][+-]?\d+(?:_\d+)*)?|\d+(?:_\d+)*(?:[eE][+-]?\d+(?:_\d+)*)?)(?:[fFlLuU]{0,3})\b",
-                "#1565C0", "#64B5F6",
-                role: SyntaxHighlightRole.Number),
-            
-            // Boolean-like values (yes/no, true/false, on/off, 0/1)
-            new SyntaxHighlights(@"(?i)(?<=[:=]\s*)(yes|no|true|false|on|off|enabled?|disabled?)\b", "#FF5722", "#FFAB91", role: SyntaxHighlightRole.Constant),
-            
-            // Comments starting with ; or #
-            new SyntaxHighlights(@"[;#].*", "#9E9E9E", "#BDBDBD", role: SyntaxHighlightRole.Comment),
-            };
-        }
+        new AutoPairingPair("[", "]")
+        };
+        this.Highlights = new SyntaxHighlights[]
+        {
+        // Section names [section_name]
+        new SyntaxHighlights(@"(?<=\[)[^\]]+(?=\])", "#7C4DFF", "#B890FF", role: SyntaxHighlightRole.Key),
+        
+        // Brackets [ and ]
+        new SyntaxHighlights(@"\[|\]", "#5C6BC0", "#9FA8DA", role: SyntaxHighlightRole.Punctuation),
+        
+        // Keys before = (supports spaces in keys)
+        new SyntaxHighlights(@"(?m)^\s*([^=;\[\]#]+?)(?=\s*=)", "#E65100", "#FFB74D", role: SyntaxHighlightRole.Key),
+        
+        // String values (quoted)
+        new SyntaxHighlights(@"(?<=[:=]\s*)([""'])(.*?)(\1)", "#00796B", "#80CBC4", role: SyntaxHighlightRole.String),
+        
+        // Numeric values
+        new SyntaxHighlights(@"\b(?:0[xX][0-9A-Fa-f]+(?:_[0-9A-Fa-f]+)*|0[bB][01]+(?:_[01]+)*|\d+(?:_\d+)*\.\d*(?:_\d*)?(?:[eE][+-]?\d+(?:_\d+)*)?|\.\d+(?:_\d*)?(?:[eE][+-]?\d+(?:_\d+)*)?|\d+(?:_\d+)*(?:[eE][+-]?\d+(?:_\d+)*)?)(?:[fFlLuU]{0,3})\b",
+            "#1565C0", "#64B5F6",
+            role: SyntaxHighlightRole.Number),
+        
+        // Boolean-like values (yes/no, true/false, on/off, 0/1)
+        new SyntaxHighlights(@"(?i)(?<=[:=]\s*)(yes|no|true|false|on|off|enabled?|disabled?)\b", "#FF5722", "#FFAB91", role: SyntaxHighlightRole.Constant),
+        
+        // Comments starting with ; or #
+        new SyntaxHighlights(@"[;#].*", "#9E9E9E", "#BDBDBD", role: SyntaxHighlightRole.Comment),
+        };
     }
-    internal class TomlHighlighter : SyntaxHighlightLanguage
+}
+internal class TomlHighlighter : SyntaxHighlightLanguage
+{
+    public TomlHighlighter()
     {
-        public TomlHighlighter()
+        this.Name = "TOML";
+        this.Filter = new[] { ".toml" };
+        this.Description = "Syntax highlighting for TOML configuration files";
+        this.StatefulHighlightRules = new IStatefulHighlightRule[]
         {
-            this.Name = "TOML";
-            this.Filter = new[] { ".toml" };
-            this.Description = "Syntax highlighting for TOML configuration files";
-            this.StatefulHighlightRules = new IStatefulHighlightRule[]
-            {
-                new DelimitedHighlightRule("\"\"\"", "\"\"\"", "#00796B", "#80CBC4", null, false, SyntaxHighlightRole.String),
-                new DelimitedHighlightRule("'''", "'''", "#00796B", "#80CBC4", null, false, SyntaxHighlightRole.String),
-            };
-            this.AutoPairingPair = new AutoPairingPair[]
-            {
+            new DelimitedHighlightRule("\"\"\"", "\"\"\"", "#00796B", "#80CBC4", null, false, SyntaxHighlightRole.String),
+            new DelimitedHighlightRule("'''", "'''", "#00796B", "#80CBC4", null, false, SyntaxHighlightRole.String),
+        };
+        this.AutoPairingPair = new AutoPairingPair[]
+        {
+        new AutoPairingPair("[", "]"),
+        new AutoPairingPair("{", "}")
+        };
+        this.Highlights = new SyntaxHighlights[]
+        {
+        // Table headers [[array.of.tables]]
+        new SyntaxHighlights(@"(?<=\[\[)[^\]]+(?=\]\])", "#9C27B0", "#CE93D8", role: SyntaxHighlightRole.Key),
+        
+        // Section headers [table.name]
+        new SyntaxHighlights(@"(?<=\[)[^\]]+(?=\])", "#7C4DFF", "#B890FF", role: SyntaxHighlightRole.Key),
+        
+        // Double brackets for arrays of tables
+        new SyntaxHighlights(@"\[\[|\]\]", "#5C6BC0", "#9FA8DA", role: SyntaxHighlightRole.Punctuation),
+        
+        // Single brackets
+        new SyntaxHighlights(@"\[|\]", "#5C6BC0", "#9FA8DA", role: SyntaxHighlightRole.Punctuation),
+        
+        // Braces { and } for inline tables
+        new SyntaxHighlights(@"\{|\}", "#5C6BC0", "#9FA8DA", role: SyntaxHighlightRole.Punctuation),
+        
+        // Keys before = (dotted keys supported)
+        new SyntaxHighlights(@"(?m)^\s*([\w\.-]+)(?=\s*=)", "#E65100", "#FFB74D", role: SyntaxHighlightRole.Key),
+        
+        // Keys in inline tables
+        new SyntaxHighlights(@"(?<=[\{,]\s*)([\w\.-]+)(?=\s*=)", "#E65100", "#FFB74D", role: SyntaxHighlightRole.Key),
+        
+        // Multi-line strings '''..''' or """..."""
+        new SyntaxHighlights(@"('''[\s\S]*?'''|""""""[\s\S]*?"""""")", "#00796B", "#80CBC4", role: SyntaxHighlightRole.String),
+        
+        // Basic strings "..." or '...'
+        new SyntaxHighlights(@"([""'])((?:\\.|(?!\1).)*?)\1", "#00796B", "#80CBC4", role: SyntaxHighlightRole.String),
+        
+        // Dates and times (ISO 8601)
+        new SyntaxHighlights(@"\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?)?", "#1565C0", "#64B5F6", role: SyntaxHighlightRole.Value),
+        
+        // Floats (including scientific notation, inf, nan)
+        new SyntaxHighlights(@"(?i)(?<=[:=]\s*)([-+]?(\d+\.\d*|\.\d+|\d+)([eE][-+]?\d+)?|[-+]?inf|[-+]?nan)\b", "#1565C0", "#64B5F6", role: SyntaxHighlightRole.Number),
+        
+        // Integers (including hex, octal, binary)
+        new SyntaxHighlights(@"(?<=[:=]\s*)([-+]?(0x[0-9a-fA-F_]+|0o[0-7_]+|0b[01_]+|\d[0-9_]*))\b", "#1565C0", "#64B5F6", role: SyntaxHighlightRole.Number),
+        
+        // Booleans
+        new SyntaxHighlights(@"(?<=[:=]\s*)(true|false)\b", "#FF5722", "#FFAB91", role: SyntaxHighlightRole.Constant),
+        
+        // Commas
+        new SyntaxHighlights(@",", "#5C6BC0", "#9FA8DA", role: SyntaxHighlightRole.Punctuation),
+        
+        // Comments starting with #
+        new SyntaxHighlights(@"#.*", "#9E9E9E", "#BDBDBD", role: SyntaxHighlightRole.Comment),
+        };
+    }
+}
+internal class KlipperHighlighter : SyntaxHighlightLanguage
+{
+    public KlipperHighlighter()
+    {
+        this.Name = "Klipper";
+        this.Filter = new[] { ".cfg", ".conf" };
+        this.Description = "Syntax highlighting for Klipper 3D printer configuration files";
+        this.AutoPairingPair = new AutoPairingPair[]
+        {
+        new AutoPairingPair("[", "]")
+        };
+        this.Highlights = new SyntaxHighlights[]
+        {
+        // Section names with optional parameters [stepper_x], [gcode_macro NAME]
+        new SyntaxHighlights(@"(?<=\[)[^\]]+(?=\])", "#7C4DFF", "#B890FF", role: SyntaxHighlightRole.Key),
+        
+        // Brackets [ and ]
+        new SyntaxHighlights(@"\[|\]", "#5C6BC0", "#9FA8DA", role: SyntaxHighlightRole.Punctuation),
+        
+        // Keys before : (Klipper uses colons)
+        new SyntaxHighlights(@"(?m)^\s*([a-zA-Z_][\w]*?)(?=\s*:)", "#E65100", "#FFB74D", role: SyntaxHighlightRole.Key),
+        
+        // Pin names and hardware references (e.g., PA1, ar54, ^PA2, ~!PB3)
+        new SyntaxHighlights(@"(?<=[:\s])([~^!]*[PZ][A-Z]\d+|ar\d+)\b", "#00897B", "#4DB6AC", role: SyntaxHighlightRole.Variable),
+        
+        // Gcode commands (G0, G1, M104, etc.)
+        new SyntaxHighlights(@"\b[GM]\d+\b", "#AD1457", "#F06292", role: SyntaxHighlightRole.Keyword),
+        
+        // String values (quoted)
+        new SyntaxHighlights(@"([""'])((?:\\.|(?!\1).)*?)\1", "#00796B", "#80CBC4", role: SyntaxHighlightRole.String),
+        
+        // Numeric values with units (e.g., 100.0, 50mm, 0.2s, 45deg)
+        new SyntaxHighlights(@"(?<=[:\s])([-+]?\d*\.?\d+)\s*(mm|s|deg|%|°)?", "#1565C0", "#64B5F6", role: SyntaxHighlightRole.Number),
+        
+        // Boolean values (True/False, true/false)
+        new SyntaxHighlights(@"(?i)(?<=[:\s])(true|false)\b", "#FF5722", "#FFAB91", role: SyntaxHighlightRole.Constant),
+        
+        // Template expressions {variable_name}
+        new SyntaxHighlights(@"\{[^}]+\}", "#6A1B9A", "#BA68C8", role: SyntaxHighlightRole.Value),
+        
+        // Commas in lists
+        new SyntaxHighlights(@",", "#5C6BC0", "#9FA8DA", role: SyntaxHighlightRole.Punctuation),
+        
+        // Comments starting with #
+        new SyntaxHighlights(@"#.*", "#9E9E9E", "#BDBDBD", role: SyntaxHighlightRole.Comment),
+        };
+    }
+}
+internal class Cpp : SyntaxHighlightLanguage
+{
+    public Cpp()
+    {
+        this.Name = "C++";
+        this.Author = "Julius Kirsch";
+        this.Filter = new string[6] { ".cpp", ".cxx", ".cc", ".hpp", ".h", ".c" };
+        this.Description = "Syntax highlighting for C++ language";
+        this.StatefulHighlightRules = new IStatefulHighlightRule[]
+        {
+            new CStyleCommentRule("#6B6A6A", "#646464"),
+        };
+        this.AutoPairingPair = new AutoPairingPair[5]
+        {
+            new AutoPairingPair("{", "}"),
             new AutoPairingPair("[", "]"),
-            new AutoPairingPair("{", "}")
-            };
-            this.Highlights = new SyntaxHighlights[]
-            {
-            // Table headers [[array.of.tables]]
-            new SyntaxHighlights(@"(?<=\[\[)[^\]]+(?=\]\])", "#9C27B0", "#CE93D8", role: SyntaxHighlightRole.Key),
-            
-            // Section headers [table.name]
-            new SyntaxHighlights(@"(?<=\[)[^\]]+(?=\])", "#7C4DFF", "#B890FF", role: SyntaxHighlightRole.Key),
-            
-            // Double brackets for arrays of tables
-            new SyntaxHighlights(@"\[\[|\]\]", "#5C6BC0", "#9FA8DA", role: SyntaxHighlightRole.Punctuation),
-            
-            // Single brackets
-            new SyntaxHighlights(@"\[|\]", "#5C6BC0", "#9FA8DA", role: SyntaxHighlightRole.Punctuation),
-            
-            // Braces { and } for inline tables
-            new SyntaxHighlights(@"\{|\}", "#5C6BC0", "#9FA8DA", role: SyntaxHighlightRole.Punctuation),
-            
-            // Keys before = (dotted keys supported)
-            new SyntaxHighlights(@"(?m)^\s*([\w\.-]+)(?=\s*=)", "#E65100", "#FFB74D", role: SyntaxHighlightRole.Key),
-            
-            // Keys in inline tables
-            new SyntaxHighlights(@"(?<=[\{,]\s*)([\w\.-]+)(?=\s*=)", "#E65100", "#FFB74D", role: SyntaxHighlightRole.Key),
-            
-            // Multi-line strings '''..''' or """..."""
-            new SyntaxHighlights(@"('''[\s\S]*?'''|""""""[\s\S]*?"""""")", "#00796B", "#80CBC4", role: SyntaxHighlightRole.String),
-            
-            // Basic strings "..." or '...'
-            new SyntaxHighlights(@"([""'])((?:\\.|(?!\1).)*?)\1", "#00796B", "#80CBC4", role: SyntaxHighlightRole.String),
-            
-            // Dates and times (ISO 8601)
-            new SyntaxHighlights(@"\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?)?", "#1565C0", "#64B5F6", role: SyntaxHighlightRole.Value),
-            
-            // Floats (including scientific notation, inf, nan)
-            new SyntaxHighlights(@"(?i)(?<=[:=]\s*)([-+]?(\d+\.\d*|\.\d+|\d+)([eE][-+]?\d+)?|[-+]?inf|[-+]?nan)\b", "#1565C0", "#64B5F6", role: SyntaxHighlightRole.Number),
-            
-            // Integers (including hex, octal, binary)
-            new SyntaxHighlights(@"(?<=[:=]\s*)([-+]?(0x[0-9a-fA-F_]+|0o[0-7_]+|0b[01_]+|\d[0-9_]*))\b", "#1565C0", "#64B5F6", role: SyntaxHighlightRole.Number),
-            
-            // Booleans
-            new SyntaxHighlights(@"(?<=[:=]\s*)(true|false)\b", "#FF5722", "#FFAB91", role: SyntaxHighlightRole.Constant),
-            
-            // Commas
-            new SyntaxHighlights(@",", "#5C6BC0", "#9FA8DA", role: SyntaxHighlightRole.Punctuation),
-            
-            // Comments starting with #
-            new SyntaxHighlights(@"#.*", "#9E9E9E", "#BDBDBD", role: SyntaxHighlightRole.Comment),
-            };
-        }
-    }
-    internal class KlipperHighlighter : SyntaxHighlightLanguage
-    {
-        public KlipperHighlighter()
+            new AutoPairingPair("(", ")"),
+            new AutoPairingPair("\""),
+            new AutoPairingPair("\'")
+        };
+        this.Highlights = new SyntaxHighlights[]
         {
-            this.Name = "Klipper";
-            this.Filter = new[] { ".cfg", ".conf" };
-            this.Description = "Syntax highlighting for Klipper 3D printer configuration files";
-            this.AutoPairingPair = new AutoPairingPair[]
-            {
-            new AutoPairingPair("[", "]")
-            };
-            this.Highlights = new SyntaxHighlights[]
-            {
-            // Section names with optional parameters [stepper_x], [gcode_macro NAME]
-            new SyntaxHighlights(@"(?<=\[)[^\]]+(?=\])", "#7C4DFF", "#B890FF", role: SyntaxHighlightRole.Key),
-            
-            // Brackets [ and ]
-            new SyntaxHighlights(@"\[|\]", "#5C6BC0", "#9FA8DA", role: SyntaxHighlightRole.Punctuation),
-            
-            // Keys before : (Klipper uses colons)
-            new SyntaxHighlights(@"(?m)^\s*([a-zA-Z_][\w]*?)(?=\s*:)", "#E65100", "#FFB74D", role: SyntaxHighlightRole.Key),
-            
-            // Pin names and hardware references (e.g., PA1, ar54, ^PA2, ~!PB3)
-            new SyntaxHighlights(@"(?<=[:\s])([~^!]*[PZ][A-Z]\d+|ar\d+)\b", "#00897B", "#4DB6AC", role: SyntaxHighlightRole.Variable),
-            
-            // Gcode commands (G0, G1, M104, etc.)
-            new SyntaxHighlights(@"\b[GM]\d+\b", "#AD1457", "#F06292", role: SyntaxHighlightRole.Keyword),
-            
-            // String values (quoted)
-            new SyntaxHighlights(@"([""'])((?:\\.|(?!\1).)*?)\1", "#00796B", "#80CBC4", role: SyntaxHighlightRole.String),
-            
-            // Numeric values with units (e.g., 100.0, 50mm, 0.2s, 45deg)
-            new SyntaxHighlights(@"(?<=[:\s])([-+]?\d*\.?\d+)\s*(mm|s|deg|%|°)?", "#1565C0", "#64B5F6", role: SyntaxHighlightRole.Number),
-            
-            // Boolean values (True/False, true/false)
-            new SyntaxHighlights(@"(?i)(?<=[:\s])(true|false)\b", "#FF5722", "#FFAB91", role: SyntaxHighlightRole.Constant),
-            
-            // Template expressions {variable_name}
-            new SyntaxHighlights(@"\{[^}]+\}", "#6A1B9A", "#BA68C8", role: SyntaxHighlightRole.Value),
-            
-            // Commas in lists
-            new SyntaxHighlights(@",", "#5C6BC0", "#9FA8DA", role: SyntaxHighlightRole.Punctuation),
-            
-            // Comments starting with #
-            new SyntaxHighlights(@"#.*", "#9E9E9E", "#BDBDBD", role: SyntaxHighlightRole.Comment),
-            };
-        }
+            new SyntaxHighlights(
+                // Numeric literals (int, float, hex, binary, scientific)
+                @"\b(?:0[xX][0-9A-Fa-f]+(?:_[0-9A-Fa-f]+)*|0[bB][01]+(?:_[01]+)*|\d+(?:_\d+)*\.\d*(?:_\d*)?(?:[eE][+-]?\d+(?:_\d+)*)?|\.\d+(?:_\d*)?(?:[eE][+-]?\d+(?:_\d+)*)?|\d+(?:_\d+)*(?:[eE][+-]?\d+(?:_\d+)*)?)(?:[fFlLuU]{0,3})\b",
+                "#dd00dd", "#00ff00",
+            role: SyntaxHighlightRole.Number),
+            new SyntaxHighlights(
+                // Function calls (identifier followed by parentheses)
+                @"(?<!\w)([a-zA-Z_]\w*)(?=\s*\()",
+                "#4455ff", "#ffbb00",
+            role: SyntaxHighlightRole.Function),
+
+            new SyntaxHighlights(
+                // Keywords
+                @"\b(string|uint16_t|uint8_t|alignas|alignof|and|and_eq|asm|auto|bitand|bitor|bool|break|case|catch|char|char8_t|char16_t|char32_t|class|compl|concept|const|const_cast|consteval|constexpr|constinit|continue|co_await|co_return|co_yield|decltype|default|delete|do|double|dynamic_cast|else|enum|explicit|export|extern|false|float|for|friend|goto|if|inline|int|long|mutable|namespace|new|noexcept|not|not_eq|nullptr|operator|or|or_eq|private|protected|public|register|reinterpret_cast|requires|return|short|signed|sizeof|static|static_assert|static_cast|struct|switch|template|this|thread_local|throw|true|try|typedef|typeid|typename|union|unsigned|using|virtual|void|volatile|wchar_t|while|xor|xor_eq)\b",
+                "#dd00dd", "#dd00dd",
+            role: SyntaxHighlightRole.Keyword),
+
+            new SyntaxHighlights(
+                // Preprocessor directives (#include, #define, etc.)
+                @"^\s*#\s*(define|elif|else|endif|error|ifndef|ifdef|if|import|include|line|pragma|region|undef|using)\b",
+                "#5F5E5E", "#999999",
+            role: SyntaxHighlightRole.Directive),
+
+            new SyntaxHighlights(
+                // Strings and chars (handles escaped quotes)
+                @"(""([^""\\]|\\.)*""|'([^'\\]|\\.)*')",
+                "#D98300", "#00FF00",
+            role: SyntaxHighlightRole.String),
+
+        };
     }
-    internal class Cpp : SyntaxHighlightLanguage
+}
+internal class CSharp : SyntaxHighlightLanguage
+{
+    public CSharp()
     {
-        public Cpp()
+        this.Name = "C#";
+        this.Author = "Julius Kirsch";
+        this.Filter = new string[1] { ".cs" };
+        this.Description = "Syntax highlighting for C# language";
+        this.StatefulHighlightRules = new IStatefulHighlightRule[]
         {
-            this.Name = "C++";
-            this.Author = "Julius Kirsch";
-            this.Filter = new string[6] { ".cpp", ".cxx", ".cc", ".hpp", ".h", ".c" };
-            this.Description = "Syntax highlighting for C++ language";
-            this.StatefulHighlightRules = new IStatefulHighlightRule[]
-            {
-                new CStyleCommentRule("#6B6A6A", "#646464"),
-            };
-            this.AutoPairingPair = new AutoPairingPair[5]
-            {
-                new AutoPairingPair("{", "}"),
-                new AutoPairingPair("[", "]"),
-                new AutoPairingPair("(", ")"),
-                new AutoPairingPair("\""),
-                new AutoPairingPair("\'")
-            };
-            this.Highlights = new SyntaxHighlights[]
-            {
-                new SyntaxHighlights(
-                    // Numeric literals (int, float, hex, binary, scientific)
-                    @"\b(?:0[xX][0-9A-Fa-f]+(?:_[0-9A-Fa-f]+)*|0[bB][01]+(?:_[01]+)*|\d+(?:_\d+)*\.\d*(?:_\d*)?(?:[eE][+-]?\d+(?:_\d+)*)?|\.\d+(?:_\d*)?(?:[eE][+-]?\d+(?:_\d+)*)?|\d+(?:_\d+)*(?:[eE][+-]?\d+(?:_\d+)*)?)(?:[fFlLuU]{0,3})\b",
-                    "#dd00dd", "#00ff00",
-                role: SyntaxHighlightRole.Number),
-                new SyntaxHighlights(
-                    // Function calls (identifier followed by parentheses)
-                    @"(?<!\w)([a-zA-Z_]\w*)(?=\s*\()",
-                    "#4455ff", "#ffbb00",
-                role: SyntaxHighlightRole.Function),
-
-                new SyntaxHighlights(
-                    // Keywords
-                    @"\b(string|uint16_t|uint8_t|alignas|alignof|and|and_eq|asm|auto|bitand|bitor|bool|break|case|catch|char|char8_t|char16_t|char32_t|class|compl|concept|const|const_cast|consteval|constexpr|constinit|continue|co_await|co_return|co_yield|decltype|default|delete|do|double|dynamic_cast|else|enum|explicit|export|extern|false|float|for|friend|goto|if|inline|int|long|mutable|namespace|new|noexcept|not|not_eq|nullptr|operator|or|or_eq|private|protected|public|register|reinterpret_cast|requires|return|short|signed|sizeof|static|static_assert|static_cast|struct|switch|template|this|thread_local|throw|true|try|typedef|typeid|typename|union|unsigned|using|virtual|void|volatile|wchar_t|while|xor|xor_eq)\b",
-                    "#dd00dd", "#dd00dd",
-                role: SyntaxHighlightRole.Keyword),
-
-                new SyntaxHighlights(
-                    // Preprocessor directives (#include, #define, etc.)
-                    @"^\s*#\s*(define|elif|else|endif|error|ifndef|ifdef|if|import|include|line|pragma|region|undef|using)\b",
-                    "#5F5E5E", "#999999",
+            new CStyleCommentRule(
+                "#888888",
+                "#646464",
+                supportsVerbatimStrings: true,
+                supportsRawStrings: true),
+        };
+        this.AutoPairingPair = new AutoPairingPair[5]
+        {
+            new AutoPairingPair("{", "}"),
+            new AutoPairingPair("[", "]"),
+            new AutoPairingPair("(", ")"),
+            new AutoPairingPair("\""),
+            new AutoPairingPair("\'")
+        };
+        this.Highlights = new SyntaxHighlights[]
+        {
+            //Number Matching
+            new SyntaxHighlights(
+                @"\b(?:0[xX][0-9A-Fa-f]+(?:_[0-9A-Fa-f]+)*|0[bB][01]+(?:_[01]+)*|\d+(?:_\d+)*\.\d*(?:_\d*)?(?:[eE][+-]?\d+(?:_\d+)*)?|\.\d+(?:_\d*)?(?:[eE][+-]?\d+(?:_\d+)*)?|\d+(?:_\d+)*(?:[eE][+-]?\d+(?:_\d+)*)?)(?:[fFlLuU]{0,3})\b",
+                "#ff00ff", "#ff00ff", role: SyntaxHighlightRole.Number),
+        
+            //Function Names
+            new SyntaxHighlights("\\b[a-zA-Z_]\\w*(?=\\()", "#880088", "#ffbb00", role: SyntaxHighlightRole.Function),
+        
+            //C# Keywords
+            new SyntaxHighlights("\\b(abstract|as|async|await|base|bool|break|byte|case|catch|char|checked|class|const|continue|decimal|default|delegate|do|double|else|enum|event|explicit|extern|external|false|final|finally|fixed|float|for|foreach|get|goto|if|implicit|in|int|interface|internal|is|lock|long|namespace|new|null|object|operator|out|override|params|partial|private|protected|public|readonly|ref|return|sbyte|sealed|set|short|sizeof|stackalloc|static|string|struct|switch|this|throw|true|try|typeof|uint|ulong|unchecked|unsafe|ushort|using|value|var|virtual|void|volatile|while)\\b", "#0066bb", "#00ffff", role: SyntaxHighlightRole.Keyword),
+        
+            //Common C# Types
+            new SyntaxHighlights("\\b(List|Color|Console|Debug|Dictionary|Stack|Queue|GC)\\b", "#008000", "#ff9900", role: SyntaxHighlightRole.Type),
+        
+            //Control Flow
+            new SyntaxHighlights("\\b(async|await|break|case|catch|continue|default|do|else|finally|for|foreach|goto|if|return|switch|throw|try|when|while|yield)\\b", "#9922ff", "#6666ff", role: SyntaxHighlightRole.ControlFlow),
+                    
+            //Preprocessor Directives
+            new SyntaxHighlights(
+                @"^[^\S\r\n]*#[^\S\r\n]*(?:region|endregion)\b[^\r\n]*",
+                "#ff0000", "#ff0000", true,
                 role: SyntaxHighlightRole.Directive),
-
-                new SyntaxHighlights(
-                    // Strings and chars (handles escaped quotes)
-                    @"(""([^""\\]|\\.)*""|'([^'\\]|\\.)*')",
-                    "#D98300", "#00FF00",
-                role: SyntaxHighlightRole.String),
-
-            };
-        }
+        
+            //String Literals
+            new SyntaxHighlights("@\".*?\"|\"(?:\\\\.|[^\"\\\\])*\"", "#ff5500", "#00FF00", role: SyntaxHighlightRole.String),
+        
+            //Character Literals
+            new SyntaxHighlights("'[^\\n]*?'", "#ff5500", "#00FF00", role: SyntaxHighlightRole.String),
+        
+        };
     }
-    internal class CSharp : SyntaxHighlightLanguage
+}
+internal class GCode : SyntaxHighlightLanguage
+{
+    public GCode()
     {
-        public CSharp()
+        this.Name = "GCode";
+        this.Author = "Julius Kirsch";
+        this.Filter = new string[5] { ".ngc", ".tap", ".gcode", ".nc", ".cnc" };
+        this.Description = "Syntax highlighting for GCode language";
+        this.Highlights = new SyntaxHighlights[]
         {
-            this.Name = "C#";
-            this.Author = "Julius Kirsch";
-            this.Filter = new string[1] { ".cs" };
-            this.Description = "Syntax highlighting for C# language";
-            this.StatefulHighlightRules = new IStatefulHighlightRule[]
-            {
-                new CStyleCommentRule(
-                    "#888888",
-                    "#646464",
-                    supportsVerbatimStrings: true,
-                    supportsRawStrings: true),
-            };
-            this.AutoPairingPair = new AutoPairingPair[5]
-            {
-                new AutoPairingPair("{", "}"),
-                new AutoPairingPair("[", "]"),
-                new AutoPairingPair("(", ")"),
-                new AutoPairingPair("\""),
-                new AutoPairingPair("\'")
-            };
-            this.Highlights = new SyntaxHighlights[]
-            {
-                //Number Matching
-                new SyntaxHighlights(
-                    @"\b(?:0[xX][0-9A-Fa-f]+(?:_[0-9A-Fa-f]+)*|0[bB][01]+(?:_[01]+)*|\d+(?:_\d+)*\.\d*(?:_\d*)?(?:[eE][+-]?\d+(?:_\d+)*)?|\.\d+(?:_\d*)?(?:[eE][+-]?\d+(?:_\d+)*)?|\d+(?:_\d+)*(?:[eE][+-]?\d+(?:_\d+)*)?)(?:[fFlLuU]{0,3})\b",
-                    "#ff00ff", "#ff00ff", role: SyntaxHighlightRole.Number),
-            
-                //Function Names
-                new SyntaxHighlights("\\b[a-zA-Z_]\\w*(?=\\()", "#880088", "#ffbb00", role: SyntaxHighlightRole.Function),
-            
-                //C# Keywords
-                new SyntaxHighlights("\\b(abstract|as|async|await|base|bool|break|byte|case|catch|char|checked|class|const|continue|decimal|default|delegate|do|double|else|enum|event|explicit|extern|external|false|final|finally|fixed|float|for|foreach|get|goto|if|implicit|in|int|interface|internal|is|lock|long|namespace|new|null|object|operator|out|override|params|partial|private|protected|public|readonly|ref|return|sbyte|sealed|set|short|sizeof|stackalloc|static|string|struct|switch|this|throw|true|try|typeof|uint|ulong|unchecked|unsafe|ushort|using|value|var|virtual|void|volatile|while)\\b", "#0066bb", "#00ffff", role: SyntaxHighlightRole.Keyword),
-            
-                //Common C# Types
-                new SyntaxHighlights("\\b(List|Color|Console|Debug|Dictionary|Stack|Queue|GC)\\b", "#008000", "#ff9900", role: SyntaxHighlightRole.Type),
-            
-                //Control Flow
-                new SyntaxHighlights("\\b(async|await|break|case|catch|continue|default|do|else|finally|for|foreach|goto|if|return|switch|throw|try|when|while|yield)\\b", "#9922ff", "#6666ff", role: SyntaxHighlightRole.ControlFlow),
-                        
-                //Preprocessor Directives
-                new SyntaxHighlights(
-                    @"^[^\S\r\n]*#[^\S\r\n]*(?:region|endregion)\b[^\r\n]*",
-                    "#ff0000", "#ff0000", true,
-                    role: SyntaxHighlightRole.Directive),
-            
-                //String Literals
-                new SyntaxHighlights("@\".*?\"|\"(?:\\\\.|[^\"\\\\])*\"", "#ff5500", "#00FF00", role: SyntaxHighlightRole.String),
-            
-                //Character Literals
-                new SyntaxHighlights("'[^\\n]*?'", "#ff5500", "#00FF00", role: SyntaxHighlightRole.String),
-            
-            };
-        }
+            new SyntaxHighlights("\\bY(?=([0-9]|(\\.|\\+|\\-)[0-9]))", "#00ff00", "#00ff00", role: SyntaxHighlightRole.Variable),
+            new SyntaxHighlights("\\bX(?=([0-9]|(\\.|\\+|\\-)[0-9]))", "#ff0000", "#ff0000", role: SyntaxHighlightRole.Variable),
+            new SyntaxHighlights("\\bZ(?=([0-9]|(\\.|\\+|\\-)[0-9]))", "#0077ff", "#0077ff", role: SyntaxHighlightRole.Variable),
+            new SyntaxHighlights("\\bA(?=([0-9]|(\\+|\\-)[0-9]))", "#ff00ff", "#ff00ff", role: SyntaxHighlightRole.Variable),
+            new SyntaxHighlights("\\b(E|F)(?=(\\-.|\\.|[0-9]|(\\+|\\-)[0-9]))", "#ffAA00", "#ffAA00", role: SyntaxHighlightRole.Variable),
+            new SyntaxHighlights("\\b(S|T)(?=(\\-.|\\.|[0-9]|(\\+|\\-)[0-9]))", "#ffff00", "#ffff00", role: SyntaxHighlightRole.Variable),
+            new SyntaxHighlights("([+-]?(?=\\.\\d|\\d)(?:\\d+)?(?:\\.?\\d*))(?:[eE]([+-]?\\d+))?", "#ff00ff", "#9f009f", role: SyntaxHighlightRole.Number),
+            new SyntaxHighlights("[G|M][0-999].*?[\\s|\\n]", "#00aaaa", "#00ffff", role: SyntaxHighlightRole.Keyword),
+            new SyntaxHighlights("(;|\\/\\/|\\brem\\b).*", "#888888", "#888888", role: SyntaxHighlightRole.Comment),
+        };
     }
-    internal class GCode : SyntaxHighlightLanguage
+}
+internal class x86Assembly : SyntaxHighlightLanguage
+{
+    public x86Assembly()
     {
-        public GCode()
+        this.Name = "x86Assembly";
+        this.Author = "Eustathios Koutsos";
+        this.Filter = new string[1] { ".asm" };
+        this.Description = "Syntax highlighting for the original x86 ISA assembly";
+        this.Highlights = new SyntaxHighlights[]
         {
-            this.Name = "GCode";
-            this.Author = "Julius Kirsch";
-            this.Filter = new string[5] { ".ngc", ".tap", ".gcode", ".nc", ".cnc" };
-            this.Description = "Syntax highlighting for GCode language";
-            this.Highlights = new SyntaxHighlights[]
-            {
-                new SyntaxHighlights("\\bY(?=([0-9]|(\\.|\\+|\\-)[0-9]))", "#00ff00", "#00ff00", role: SyntaxHighlightRole.Variable),
-                new SyntaxHighlights("\\bX(?=([0-9]|(\\.|\\+|\\-)[0-9]))", "#ff0000", "#ff0000", role: SyntaxHighlightRole.Variable),
-                new SyntaxHighlights("\\bZ(?=([0-9]|(\\.|\\+|\\-)[0-9]))", "#0077ff", "#0077ff", role: SyntaxHighlightRole.Variable),
-                new SyntaxHighlights("\\bA(?=([0-9]|(\\+|\\-)[0-9]))", "#ff00ff", "#ff00ff", role: SyntaxHighlightRole.Variable),
-                new SyntaxHighlights("\\b(E|F)(?=(\\-.|\\.|[0-9]|(\\+|\\-)[0-9]))", "#ffAA00", "#ffAA00", role: SyntaxHighlightRole.Variable),
-                new SyntaxHighlights("\\b(S|T)(?=(\\-.|\\.|[0-9]|(\\+|\\-)[0-9]))", "#ffff00", "#ffff00", role: SyntaxHighlightRole.Variable),
-                new SyntaxHighlights("([+-]?(?=\\.\\d|\\d)(?:\\d+)?(?:\\.?\\d*))(?:[eE]([+-]?\\d+))?", "#ff00ff", "#9f009f", role: SyntaxHighlightRole.Number),
-                new SyntaxHighlights("[G|M][0-999].*?[\\s|\\n]", "#00aaaa", "#00ffff", role: SyntaxHighlightRole.Keyword),
-                new SyntaxHighlights("(;|\\/\\/|\\brem\\b).*", "#888888", "#888888", role: SyntaxHighlightRole.Comment),
-            };
-        }
+            new SyntaxHighlights("^((?i)rep|^(?i)repe|^(?i)repne|^(?i)repnz|^(?i)repz)($|\\s)", "#5e00c7", "#983cff", true, role: SyntaxHighlightRole.Directive), // prefixes
+            new SyntaxHighlights(@"(?i)\b(aaa|aad|aam|aas|adc|add|and|call|cbw|clc|cld|cli|cmc|cmp|cmpsb|cmpsw|cwd|daa|das|dec|div|esc|hlt|idiv|imul|in|inc|int|into|iret|ja|jae|jb|jbe|jc|je|jg|jge|jl|jle|jna|jnae|jnb|jnbe|jnc|jne|jng|jnge|jnl|jnle|jno|jnp|jns|jnz|jo|jp|jpe|jpo|js|jz|jcxz|jmp|lahf|lds|lea|les|lock|lodsb|lodsw|loop|mov|movsb|movsw|mul|neg|nop|not|or|out|pop|popf|push|pushf|rcl|rcr|ret|retn|retf|rol|ror|sahf|sal|sar|sbb|scasb|scasw|shl|shr|stc|std|sti|stosb|stosw|sub|test|wait|xchg|xlat|xor)($|\s)", "#8400ff", "#8400ff", true, role: SyntaxHighlightRole.Keyword), // instructions
+            new SyntaxHighlights(@"(?i)(?<=^|\\s|\\[|\\]|\\*|\\+|-)(rax|eax|ax|ah|al|rbx|ebx|bx|bh|bl|rcx|ecx|cx|ch|cl|rdx|edx|dx|dh|dl|rdi|edi|di|dil|rsi|esi|si|sil|cs|ds|ss|es|fs|rbp|ebp|bp|bpl|rip|eip|ip|rsp|esp|sp|spl)\b", "#c4aa00", "#c4aa00", role: SyntaxHighlightRole.Variable), // registers
+            new SyntaxHighlights("0b|0[xX][0-9a-fA-F]+|[0-9]+|0[bB][0-1]+", "#558900", "#74bd00", role: SyntaxHighlightRole.Number), // values
+            new SyntaxHighlights("^\\s*(?i)int", "#005eb0", "#1994ff", true, role: SyntaxHighlightRole.Keyword), // int
+            new SyntaxHighlights("(\\[|\\]|\\*|\\+|-])", "#0075c3", "#0099ff", role: SyntaxHighlightRole.Operator), // brackets
+            new SyntaxHighlights("^\\s*[aA-zZ]+:", "#007a41", "#00ab5b", italic: true, role: SyntaxHighlightRole.Label), // labels
+            new SyntaxHighlights("\\s*;(.*)", "#028100", "#04d400", role: SyntaxHighlightRole.Comment) // comments
+        };
     }
-    internal class x86Assembly : SyntaxHighlightLanguage
+}
+internal class HexFile : SyntaxHighlightLanguage
+{
+    public HexFile()
     {
-        public x86Assembly()
+        this.Name = "HexFile";
+        this.Author = "Finn Freitag";
+        this.Filter = new string[2] { ".hex", ".bin" };
+        this.Description = "Syntaxhighlighting for hex and binary code.";
+        this.Highlights = new SyntaxHighlights[]
         {
-            this.Name = "x86Assembly";
-            this.Author = "Eustathios Koutsos";
-            this.Filter = new string[1] { ".asm" };
-            this.Description = "Syntax highlighting for the original x86 ISA assembly";
-            this.Highlights = new SyntaxHighlights[]
-            {
-                new SyntaxHighlights("^((?i)rep|^(?i)repe|^(?i)repne|^(?i)repnz|^(?i)repz)($|\\s)", "#5e00c7", "#983cff", true, role: SyntaxHighlightRole.Directive), // prefixes
-                new SyntaxHighlights(@"(?i)\b(aaa|aad|aam|aas|adc|add|and|call|cbw|clc|cld|cli|cmc|cmp|cmpsb|cmpsw|cwd|daa|das|dec|div|esc|hlt|idiv|imul|in|inc|int|into|iret|ja|jae|jb|jbe|jc|je|jg|jge|jl|jle|jna|jnae|jnb|jnbe|jnc|jne|jng|jnge|jnl|jnle|jno|jnp|jns|jnz|jo|jp|jpe|jpo|js|jz|jcxz|jmp|lahf|lds|lea|les|lock|lodsb|lodsw|loop|mov|movsb|movsw|mul|neg|nop|not|or|out|pop|popf|push|pushf|rcl|rcr|ret|retn|retf|rol|ror|sahf|sal|sar|sbb|scasb|scasw|shl|shr|stc|std|sti|stosb|stosw|sub|test|wait|xchg|xlat|xor)($|\s)", "#8400ff", "#8400ff", true, role: SyntaxHighlightRole.Keyword), // instructions
-                new SyntaxHighlights(@"(?i)(?<=^|\\s|\\[|\\]|\\*|\\+|-)(rax|eax|ax|ah|al|rbx|ebx|bx|bh|bl|rcx|ecx|cx|ch|cl|rdx|edx|dx|dh|dl|rdi|edi|di|dil|rsi|esi|si|sil|cs|ds|ss|es|fs|rbp|ebp|bp|bpl|rip|eip|ip|rsp|esp|sp|spl)\b", "#c4aa00", "#c4aa00", role: SyntaxHighlightRole.Variable), // registers
-                new SyntaxHighlights("0b|0[xX][0-9a-fA-F]+|[0-9]+|0[bB][0-1]+", "#558900", "#74bd00", role: SyntaxHighlightRole.Number), // values
-                new SyntaxHighlights("^\\s*(?i)int", "#005eb0", "#1994ff", true, role: SyntaxHighlightRole.Keyword), // int
-                new SyntaxHighlights("(\\[|\\]|\\*|\\+|-])", "#0075c3", "#0099ff", role: SyntaxHighlightRole.Operator), // brackets
-                new SyntaxHighlights("^\\s*[aA-zZ]+:", "#007a41", "#00ab5b", italic: true, role: SyntaxHighlightRole.Label), // labels
-                new SyntaxHighlights("\\s*;(.*)", "#028100", "#04d400", role: SyntaxHighlightRole.Comment) // comments
-            };
-        }
+            new SyntaxHighlights("\\:", "#FFFF00", "#FFFF00", role: SyntaxHighlightRole.Punctuation),
+            new SyntaxHighlights("\\:([0-9A-Fa-f]{2})", "#00FF00", "#00FF00", role: SyntaxHighlightRole.Value),
+            new SyntaxHighlights("\\:[0-9A-Fa-f]{2}([0-9A-Fa-f]{4})", "#00FF00", "#00FF00", role: SyntaxHighlightRole.Value),
+            new SyntaxHighlights("\\:[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})", "#FF5500", "#FF5500", role: SyntaxHighlightRole.Value),
+            new SyntaxHighlights("\\:[0-9A-Fa-f]{8}([0-9A-Fa-f]*)[0-9A-Fa-f]{2}", "#00FFFF", "#00FFFF", role: SyntaxHighlightRole.Value),
+            new SyntaxHighlights("\\:[0-9A-Fa-f]{8}[0-9A-Fa-f]*([0-9A-Fa-f]{2})", "#666666", "#666666", role: SyntaxHighlightRole.Value),
+            new SyntaxHighlights("//.*", "#666666", "#666666", role: SyntaxHighlightRole.Comment),
+            new SyntaxHighlights("[^0-9A-Fa-f\\:\\n]", "#FF0000", "#FF0000", false, false, true, role: SyntaxHighlightRole.Value),
+        };
     }
-    internal class HexFile : SyntaxHighlightLanguage
+}
+internal class Html : SyntaxHighlightLanguage
+{
+    public Html()
     {
-        public HexFile()
+        this.Name = "Html";
+        this.Author = "Julius Kirsch";
+        this.Filter = new string[2] { ".html", ".htm" };
+        this.Description = "Syntax highlighting for Html language";
+        this.StatefulHighlightRules = new IStatefulHighlightRule[]
         {
-            this.Name = "HexFile";
-            this.Author = "Finn Freitag";
-            this.Filter = new string[2] { ".hex", ".bin" };
-            this.Description = "Syntaxhighlighting for hex and binary code.";
-            this.Highlights = new SyntaxHighlights[]
-            {
-                new SyntaxHighlights("\\:", "#FFFF00", "#FFFF00", role: SyntaxHighlightRole.Punctuation),
-                new SyntaxHighlights("\\:([0-9A-Fa-f]{2})", "#00FF00", "#00FF00", role: SyntaxHighlightRole.Value),
-                new SyntaxHighlights("\\:[0-9A-Fa-f]{2}([0-9A-Fa-f]{4})", "#00FF00", "#00FF00", role: SyntaxHighlightRole.Value),
-                new SyntaxHighlights("\\:[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})", "#FF5500", "#FF5500", role: SyntaxHighlightRole.Value),
-                new SyntaxHighlights("\\:[0-9A-Fa-f]{8}([0-9A-Fa-f]*)[0-9A-Fa-f]{2}", "#00FFFF", "#00FFFF", role: SyntaxHighlightRole.Value),
-                new SyntaxHighlights("\\:[0-9A-Fa-f]{8}[0-9A-Fa-f]*([0-9A-Fa-f]{2})", "#666666", "#666666", role: SyntaxHighlightRole.Value),
-                new SyntaxHighlights("//.*", "#666666", "#666666", role: SyntaxHighlightRole.Comment),
-                new SyntaxHighlights("[^0-9A-Fa-f\\:\\n]", "#FF0000", "#FF0000", false, false, true, role: SyntaxHighlightRole.Value),
-            };
-        }
+            new DelimitedHighlightRule("<!--", "-->", "#888888", "#888888", null, false, SyntaxHighlightRole.Comment),
+        };
+
+        this.Highlights = new SyntaxHighlights[]
+        {
+            new SyntaxHighlights("\\b([+-]?(?=\\.\\d|\\d)(?:\\d+)?(?:\\.?\\d*))(?:[eE]([+-]?\\d+))?\\b", "#dd00dd", "#ff00ff", role: SyntaxHighlightRole.Number),
+            new SyntaxHighlights("[-A-Za-z_]+\\=", "#00CA00", "#Ff0000", role: SyntaxHighlightRole.AttributeName),
+            new SyntaxHighlights("<([^ >!\\/]+)[^>]*>", "#969696", "#0099ff", role: SyntaxHighlightRole.MarkupName),
+            new SyntaxHighlights("<+[/]+[a-zA-Z0-9:?\\-_]+>", "#969696", "#0099ff", role: SyntaxHighlightRole.MarkupName),
+            new SyntaxHighlights("<[a-zA-Z0-9:?\\-]+?.*\\/>", "#969696", "#0099ff", role: SyntaxHighlightRole.MarkupName),
+            new SyntaxHighlights("\"[^\\n]*?\"", "#00CA00", "#00FF00", role: SyntaxHighlightRole.String),
+            new SyntaxHighlights("'[^\\n]*?'", "#00CA00", "#00FF00", role: SyntaxHighlightRole.String),
+            new SyntaxHighlights("[0-9]+(px|rem|em|vh|vw|px|pt|pc|in|mm|cm|deg|%)", "#ff00ff", "#dd00dd", role: SyntaxHighlightRole.Number),
+        };
     }
-    internal class Html : SyntaxHighlightLanguage
+}
+internal class Java : SyntaxHighlightLanguage
+{
+    public Java()
     {
-        public Html()
+        this.Name = "Java";
+        this.Author = "Julius Kirsch";
+        this.Filter = new string[2] { ".java", ".class" };
+        this.Description = "Syntax highlighting for Java language";
+        this.StatefulHighlightRules = new IStatefulHighlightRule[]
         {
-            this.Name = "Html";
-            this.Author = "Julius Kirsch";
-            this.Filter = new string[2] { ".html", ".htm" };
-            this.Description = "Syntax highlighting for Html language";
-            this.StatefulHighlightRules = new IStatefulHighlightRule[]
-            {
-                new DelimitedHighlightRule("<!--", "-->", "#888888", "#888888", null, false, SyntaxHighlightRole.Comment),
-            };
-
-            this.Highlights = new SyntaxHighlights[]
-            {
-                new SyntaxHighlights("\\b([+-]?(?=\\.\\d|\\d)(?:\\d+)?(?:\\.?\\d*))(?:[eE]([+-]?\\d+))?\\b", "#dd00dd", "#ff00ff", role: SyntaxHighlightRole.Number),
-                new SyntaxHighlights("[-A-Za-z_]+\\=", "#00CA00", "#Ff0000", role: SyntaxHighlightRole.AttributeName),
-                new SyntaxHighlights("<([^ >!\\/]+)[^>]*>", "#969696", "#0099ff", role: SyntaxHighlightRole.MarkupName),
-                new SyntaxHighlights("<+[/]+[a-zA-Z0-9:?\\-_]+>", "#969696", "#0099ff", role: SyntaxHighlightRole.MarkupName),
-                new SyntaxHighlights("<[a-zA-Z0-9:?\\-]+?.*\\/>", "#969696", "#0099ff", role: SyntaxHighlightRole.MarkupName),
-                new SyntaxHighlights("\"[^\\n]*?\"", "#00CA00", "#00FF00", role: SyntaxHighlightRole.String),
-                new SyntaxHighlights("'[^\\n]*?'", "#00CA00", "#00FF00", role: SyntaxHighlightRole.String),
-                new SyntaxHighlights("[0-9]+(px|rem|em|vh|vw|px|pt|pc|in|mm|cm|deg|%)", "#ff00ff", "#dd00dd", role: SyntaxHighlightRole.Number),
-            };
-        }
+            new CStyleCommentRule("#888888", "#646464", supportsRawStrings: true),
+        };
+        this.AutoPairingPair = new AutoPairingPair[5]
+        {
+            new AutoPairingPair("{", "}"),
+            new AutoPairingPair("[", "]"),
+            new AutoPairingPair("(", ")"),
+            new AutoPairingPair("\""),
+            new AutoPairingPair("\'")
+        };
+        this.Highlights = new SyntaxHighlights[]
+        {
+            new SyntaxHighlights("\\b([+-]?(?=\\.\\d|\\d)(?:\\d+)?(?:\\.?\\d*))(?:[eE]([+-]?\\d+))?\\b", "#ff00ff", "#ff00ff", role: SyntaxHighlightRole.Number),
+            new SyntaxHighlights("(?<!(def\\s))(?<=^|\\s|.)[a-zA-Z_][\\w_]*(?=\\()", "#880088", "#ffbb00", role: SyntaxHighlightRole.Function),
+            new SyntaxHighlights("\\b(System.out|System|Math)\\b", "#008000", "#ff9900", role: SyntaxHighlightRole.Type),
+            new SyntaxHighlights("\\b(abstract|assert|boolean|break|byte|case|catch|char|class|const|continue|default|do|double|else|enum|extends|final|finally|float|for|goto|if|implements|import|instanceof|int|interface|long|native|new|package|private|protected|public|return|short|static|super|switch|synchronized|this|throw|throws|transient|try|void|volatile|while|exports|modle|non-sealed|open|opens|permits|provides|record|requires|sealed|to|transitive|uses|var|with|yield|true|false|null)\\b", "#0066bb", "#00ffff", role: SyntaxHighlightRole.Keyword),
+            new SyntaxHighlights("\"[^\\n]*?\"", "#ff5500", "#00FF00", role: SyntaxHighlightRole.String),
+            new SyntaxHighlights("'[^\\n]*?'", "#00CA00", "#00FF00", role: SyntaxHighlightRole.String),
+        };
     }
-    internal class Java : SyntaxHighlightLanguage
+}
+internal class Javascript : SyntaxHighlightLanguage
+{
+    public Javascript()
     {
-        public Java()
+        this.Name = "Javascript";
+        this.Author = "Finn Freitag";
+        this.Filter = new string[1] { ".js" };
+        this.Description = "Syntax highlighting for Javascript language";
+        this.StatefulHighlightRules = new IStatefulHighlightRule[]
         {
-            this.Name = "Java";
-            this.Author = "Julius Kirsch";
-            this.Filter = new string[2] { ".java", ".class" };
-            this.Description = "Syntax highlighting for Java language";
-            this.StatefulHighlightRules = new IStatefulHighlightRule[]
-            {
-                new CStyleCommentRule("#888888", "#646464", supportsRawStrings: true),
-            };
-            this.AutoPairingPair = new AutoPairingPair[5]
-            {
-                new AutoPairingPair("{", "}"),
-                new AutoPairingPair("[", "]"),
-                new AutoPairingPair("(", ")"),
-                new AutoPairingPair("\""),
-                new AutoPairingPair("\'")
-            };
-            this.Highlights = new SyntaxHighlights[]
-            {
-                new SyntaxHighlights("\\b([+-]?(?=\\.\\d|\\d)(?:\\d+)?(?:\\.?\\d*))(?:[eE]([+-]?\\d+))?\\b", "#ff00ff", "#ff00ff", role: SyntaxHighlightRole.Number),
-                new SyntaxHighlights("(?<!(def\\s))(?<=^|\\s|.)[a-zA-Z_][\\w_]*(?=\\()", "#880088", "#ffbb00", role: SyntaxHighlightRole.Function),
-                new SyntaxHighlights("\\b(System.out|System|Math)\\b", "#008000", "#ff9900", role: SyntaxHighlightRole.Type),
-                new SyntaxHighlights("\\b(abstract|assert|boolean|break|byte|case|catch|char|class|const|continue|default|do|double|else|enum|extends|final|finally|float|for|goto|if|implements|import|instanceof|int|interface|long|native|new|package|private|protected|public|return|short|static|super|switch|synchronized|this|throw|throws|transient|try|void|volatile|while|exports|modle|non-sealed|open|opens|permits|provides|record|requires|sealed|to|transitive|uses|var|with|yield|true|false|null)\\b", "#0066bb", "#00ffff", role: SyntaxHighlightRole.Keyword),
-                new SyntaxHighlights("\"[^\\n]*?\"", "#ff5500", "#00FF00", role: SyntaxHighlightRole.String),
-                new SyntaxHighlights("'[^\\n]*?'", "#00CA00", "#00FF00", role: SyntaxHighlightRole.String),
-            };
-        }
-    }
-    internal class Javascript : SyntaxHighlightLanguage
-    {
-        public Javascript()
+            new CStyleCommentRule("#888888", "#646464", supportsBacktickStrings: true),
+        };
+        this.AutoPairingPair = new AutoPairingPair[6]
         {
-            this.Name = "Javascript";
-            this.Author = "Finn Freitag";
-            this.Filter = new string[1] { ".js" };
-            this.Description = "Syntax highlighting for Javascript language";
-            this.StatefulHighlightRules = new IStatefulHighlightRule[]
-            {
-                new CStyleCommentRule("#888888", "#646464", supportsBacktickStrings: true),
-            };
-            this.AutoPairingPair = new AutoPairingPair[6]
-            {
-                new AutoPairingPair("{", "}"),
-                new AutoPairingPair("[", "]"),
-                new AutoPairingPair("(", ")"),
-                new AutoPairingPair("`", "`"),
-                new AutoPairingPair("\""),
-                new AutoPairingPair("\'")
-            };
-
-            this.Highlights = new SyntaxHighlights[]
-            {
-                new SyntaxHighlights("\\W", "#990033", "#CC0066", role: SyntaxHighlightRole.Punctuation),
-                new SyntaxHighlights("(\\+|\\-|\\*|/|%|\\=|\\:|\\!|>|\\<|\\?|&|\\||\\~|\\^)", "#77FF77", "#77FF77", role: SyntaxHighlightRole.Operator),
-                new SyntaxHighlights("\\b([+-]?(?=\\.\\d|\\d)(?:\\d+)?(?:\\.?\\d*))(?:[eE]([+-]?\\d+))?\\b", "#ff00ff", "#ff00ff", role: SyntaxHighlightRole.Number),
-                new SyntaxHighlights("(?<!(def\\s))(?<=^|\\s|.)[a-zA-Z_][\\w_]*(?=\\()", "#880088", "#ffbb00", role: SyntaxHighlightRole.Function),
-                new SyntaxHighlights("\\b(goto|in|instanceof|static|arguments|public|do|else|const|function|class|return|let|eval|for|if|this|break|debugger|yield|extends|enum|continue|export|null|switch|private|new|throw|while|case|await|delete|super|default|void|var|protected|package|interface|false|typeof|implements|with|import|true)\\b", "#0066bb", "#00ffff", role: SyntaxHighlightRole.Keyword),
-                new SyntaxHighlights("\\b(document|window|screen)\\b", "#008000", "#33BB00", role: SyntaxHighlightRole.Variable),
-                new SyntaxHighlights("\\b(try|catch|finally)\\b", "#9922ff", "#6666ff", role: SyntaxHighlightRole.ControlFlow),
-                new SyntaxHighlights("/[^\\n]*/i{0,1}", "#FFFF00", "#FFFF00", role: SyntaxHighlightRole.String),
-                new SyntaxHighlights("[\"'][^\\n]*?[\"']", "#ff5500", "#00FF00", role: SyntaxHighlightRole.String),
-            };
-        }
-    }
-    internal class Json : SyntaxHighlightLanguage
-    {
-        public Json()
-        {
-            this.Name = "Json";
-            this.Author = "Julius Kirsch";
-            this.Filter = new string[1] { ".json" };
-            this.Description = "Syntax highlighting for Json language";
-            this.StatefulHighlightRules = new IStatefulHighlightRule[]
-            {
-                new CStyleCommentRule("#888888", "#646464"),
-            };
-            this.AutoPairingPair = new AutoPairingPair[4]
-            {
-                new AutoPairingPair("{", "}"),
-                new AutoPairingPair("[", "]"),
-                new AutoPairingPair("\""),
-                new AutoPairingPair("\'")
-            };
-
-            this.Highlights = new SyntaxHighlights[]
-            {
-                new SyntaxHighlights("\\b([+-]?(?=\\.\\d|\\d)(?:\\d+)?(?:\\.?\\d*))(?:[eE]([+-]?\\d+))?\\b", "#dd00dd", "#ff00ff", role: SyntaxHighlightRole.Number),
-                new SyntaxHighlights("(null|true|false)", "#00AADD", "#0099ff", role: SyntaxHighlightRole.Constant),
-                new SyntaxHighlights("(,|{|}|\\[|\\])", "#969696", "#646464", role: SyntaxHighlightRole.Punctuation),
-                new SyntaxHighlights("(\".+\")\\:", "#00CA00", "#dddd00", role: SyntaxHighlightRole.Key),
-                new SyntaxHighlights("'[^\\n]*?'", "#00CA00", "#00FF00", role: SyntaxHighlightRole.String),
-                new SyntaxHighlights("\"[^\\n]*?\"", "#00CA00", "#00FF00", role: SyntaxHighlightRole.String),
-            };
-        }
-    }
-    internal class PHP : SyntaxHighlightLanguage
-    {
-        public PHP()
-        {
-            this.Name = "PHP";
-            this.Author = "Finn Freitag";
-            this.Filter = new string[1] { ".php" };
-            this.Description = "Syntax highlighting for PHP language";
-            this.StatefulHighlightRules = new IStatefulHighlightRule[]
-            {
-                new CStyleCommentRule(
-                    "#888888",
-                    "#646464",
-                    supportsHashLineComments: true,
-                    supportsBacktickStrings: true),
-            };
-            this.AutoPairingPair = new AutoPairingPair[2]
-            {
-                new AutoPairingPair("\""),
-                new AutoPairingPair("\'")
-            };
-
-            this.Highlights = new SyntaxHighlights[]
-            {
-                new SyntaxHighlights("\\<\\?php", "#FF0000", "#FF0000", role: SyntaxHighlightRole.Directive),
-                new SyntaxHighlights("\\?\\>", "#FF0000", "#FF0000", role: SyntaxHighlightRole.Directive),
-                new SyntaxHighlights("(?<!(def\\s))(?<=^|\\s|.)[a-zA-Z_][\\w_]*(?=\\()", "#3300FF", "#aa00FF", role: SyntaxHighlightRole.Function),
-                new SyntaxHighlights("\\b(echo|if|case|while|else|switch|foreach|function|default|break|null|true|false)\\b", "#0077FF", "#0077FF", role: SyntaxHighlightRole.Keyword),
-                new SyntaxHighlights("\\b([+-]?(?=\\.\\d|\\d)(?:\\d+)?(?:\\.?\\d*))(?:[eE]([+-]?\\d+))?\\b", "#ff00ff", "#ff00ff", role: SyntaxHighlightRole.Number),
-                new SyntaxHighlights("(\\+|\\-|\\*|/|%|\\=|\\:|\\!|>|\\<|\\?|&|\\||\\~|\\^)", "#77FF77", "#77FF77", role: SyntaxHighlightRole.Operator),
-                new SyntaxHighlights("\\$\\w+", "#440044", "#FFBBFF", role: SyntaxHighlightRole.Variable),
-                new SyntaxHighlights("\"[^\\n]*?\"", "#ff5500", "#00FF00", role: SyntaxHighlightRole.String),
-                new SyntaxHighlights("\\'[^\\n]*?\\'", "#ff5500", "#00FF00", role: SyntaxHighlightRole.String),
-                new SyntaxHighlights("\"/[^\\n]*/i{0,1}\"", "#ff5500", "#00FF00", role: SyntaxHighlightRole.String),
-            };
-        }
-    }
-    internal class QSharp : SyntaxHighlightLanguage
-    {
-        public QSharp()
-        {
-            this.Name = "QSharp";
-            this.Author = "Finn Freitag";
-            this.Filter = new string[1] { ".qs" };
-            this.Description = "Syntax highlighting for QSharp language";
-            this.AutoPairingPair = new AutoPairingPair[5]
-            {
-                new AutoPairingPair("{", "}"),
-                new AutoPairingPair("[", "]"),
-                new AutoPairingPair("(", ")"),
-                new AutoPairingPair("\""),
-                new AutoPairingPair("\'")
-            };
-
-            this.Highlights = new SyntaxHighlights[]
-            {
-                new SyntaxHighlights("\\W", "#BB0000", "#BB0000", role: SyntaxHighlightRole.Punctuation),
-                new SyntaxHighlights("\\/\\/.*", "#888888", "#646464", role: SyntaxHighlightRole.Comment),
-                new SyntaxHighlights("\\b(namespace|open|operation|using|let|H|M|Reset|return)\\b", "#0066bb", "#00ffff", role: SyntaxHighlightRole.Keyword),
-                new SyntaxHighlights("\\b(Qubit|Result)\\b", "#00bb66", "#00ff00", role: SyntaxHighlightRole.Type),
-            };
-        }
-    }
-    internal class XML : SyntaxHighlightLanguage
-    {
-        public XML()
-        {
-            this.Name = "XML";
-            this.Author = "Julius Kirsch";
-            this.Filter = new string[2] { ".xml", ".xaml" };
-            this.Description = "Syntax highlighting for Xml language";
-            this.StatefulHighlightRules = new IStatefulHighlightRule[]
-            {
-                new DelimitedHighlightRule("<!--", "-->", "#888888", "#888888", null, false, SyntaxHighlightRole.Comment),
-            };
-            this.Highlights = new SyntaxHighlights[]
-            {
-                //numeric values (handles floating point and scientific notation)
-                new SyntaxHighlights("[+-]?(?:\\d*\\.\\d+|\\d+)(?:[eE][+-]?\\d+)?", "#dd00dd", "#ff00ff", role: SyntaxHighlightRole.Number),
-            
-                //opening tags
-                new SyntaxHighlights("<([a-zA-Z_:][\\w:.-]*)[^>]*>", "#969696", "#0099ff", role: SyntaxHighlightRole.MarkupName),
-            
-                //Closing tags
-                new SyntaxHighlights("</([a-zA-Z_:][\\w:.-]*)>", "#969696", "#0099ff", role: SyntaxHighlightRole.MarkupName),
-            
-                //Self-closing tags
-                new SyntaxHighlights("<([a-zA-Z_:][\\w:.-]*)[^>]*/>", "#969696", "#0099ff", role: SyntaxHighlightRole.MarkupName),
-            
-                //Attributes
-                new SyntaxHighlights("[a-zA-Z_:][\\w:.-]*=", "#00CA00", "#ff0000", role: SyntaxHighlightRole.AttributeName),
-            
-                //Double-quoted attribute values
-                new SyntaxHighlights("\"[^\n]*?\"", "#00CA00", "#00FF00", role: SyntaxHighlightRole.String),
-            
-                //Single-quoted attribute values
-                new SyntaxHighlights("'[^\n]*?'", "#00CA00", "#00FF00", role: SyntaxHighlightRole.String),
-            
-            };
-        }
-    }
-    internal class Python : SyntaxHighlightLanguage
-    {
-        public Python()
-        {
-            this.Name = "Python";
-            this.Author = "Julius Kirsch";
-            this.Filter = new string[1] { ".py" };
-            this.Description = "Syntax highlighting for Python language";
-            this.StatefulHighlightRules = new IStatefulHighlightRule[]
-            {
-                new DelimitedHighlightRule("\"\"\"", "\"\"\"", "#888888", "#646464", null, false, SyntaxHighlightRole.String),
-                new DelimitedHighlightRule("'''", "'''", "#888888", "#646464", null, false, SyntaxHighlightRole.String),
-            };
-            this.AutoPairingPair = new AutoPairingPair[6]
-            {
-                new AutoPairingPair("{", "}"),
-                new AutoPairingPair("[", "]"),
-                new AutoPairingPair("(", ")"),
-                new AutoPairingPair("`", "`"),
-                new AutoPairingPair("\""),
-                new AutoPairingPair("\'")
-            };
-
-            this.Highlights = new SyntaxHighlights[]
-            {
-                new SyntaxHighlights("\\b([+-]?(?=\\.\\d|\\d)(?:\\d+)?(?:\\.?\\d*))(?:[eE]([+-]?\\d+))?\\b", "#dd00dd", "#ff00ff", role: SyntaxHighlightRole.Number),
-                new SyntaxHighlights("\\b(and|as|assert|break|class|continue|def|del|elif|else|except|False|finally|for|from|global|if|import|in|is|lambda|None|nonlocal|not|or|pass|raise|return|True|try|while|with|yield)\\b", "#aa00cc", "#cc00ff", role: SyntaxHighlightRole.Keyword),
-                new SyntaxHighlights("\\b(?<=def )\\w+(?=\\()|\\b\\w+(?=\\()", "#cc9900", "#ffbb00", role: SyntaxHighlightRole.Function),
-                new SyntaxHighlights("\"[^\\n]*?\"", "#ff5500", "#00FF00", role: SyntaxHighlightRole.String),
-                new SyntaxHighlights("'[^\\n]*?'", "#00CA00", "#00FF00", role: SyntaxHighlightRole.String),
-                new SyntaxHighlights("\\#.*", "#888888", "#646464", role: SyntaxHighlightRole.Comment),
-                new SyntaxHighlights(@"\""\""\""[\s\S]*?\""\""\""", "#888888", "#646464", role: SyntaxHighlightRole.Comment),
-            };
-        }
-    }
-    internal class CSV : SyntaxHighlightLanguage
-    {
-        public CSV()
-        {
-            this.Name = "CSV";
-            this.Author = "Finn Freitag";
-            this.Filter = new string[1] { ".csv" };
-            this.Description = "Syntax highlighting for CSV language";
-            this.Highlights = new SyntaxHighlights[]
-            {
-                new SyntaxHighlights("[\\:\\,\\;\\|]", "#1b9902", "#1b9902", role: SyntaxHighlightRole.Punctuation)
-            };
-        }
-    }
-    internal class CSVEnhanced : SyntaxHighlightLanguage
-    {
-        public CSVEnhanced()
-        {
-            this.Name = "CSV Enhanced";
-            this.Author = "Julius Kirsch";
-            this.Filter = new string[1] { ".csv" };
-            this.Description = "Enhanced syntax highlighting for CSV with alternating row colors";
-
-            this.HighlightRules = new IHighlightRule[]
-            {
-                new CsvColumnHighlightRule(),
-
-                new RegexHighlightRule(
-                    new SyntaxHighlights(
-                        "[\\:\\,\\;\\|]",
-                        "#bd0020",
-                        "#f14260",
-                        role: SyntaxHighlightRole.Punctuation)
-                )
-            };
-        }
-    }
-    internal class LaTex : SyntaxHighlightLanguage
-    {
-        public LaTex()
-        {
-            this.Name = "LaTex";
-            this.Author = "Finn Freitag";
-            this.Filter = new string[2] { ".latex", ".tex" };
-            this.Description = "Syntax highlighting for LaTex language";
-            this.Highlights = new SyntaxHighlights[]
-            {
-                new SyntaxHighlights("\\\\[a-z]+", "#0033aa", "#0088ff", role: SyntaxHighlightRole.Directive),
-                new SyntaxHighlights("%.*", "#888888", "#646464", role: SyntaxHighlightRole.Comment),
-                new SyntaxHighlights("[\\[\\]]", "#FFFF00", "#FFFF00", role: SyntaxHighlightRole.Punctuation),
-                new SyntaxHighlights("[\\{\\}]", "#FF0000", "#FF0000", role: SyntaxHighlightRole.Punctuation),
-                new SyntaxHighlights("\\$", "#00bb00", "#00FF00", role: SyntaxHighlightRole.Punctuation)
-            };
-        }
-    }
-    internal class Markdown : SyntaxHighlightLanguage
-    {
-        public Markdown()
-        {
-            this.Name = "Markdown";
-            this.Author = "Julius Kirsch";
-            this.Filter = new string[1] { ".md" };
-            this.Description = "Syntax highlighting for Markdown language";
-            this.StatefulHighlightRules = new IStatefulHighlightRule[]
-            {
-                new DelimitedHighlightRule("```", "```", "#F39C12", "#F39C12", null, false, SyntaxHighlightRole.String),
-            };
-            this.Highlights = new SyntaxHighlights[]
-            {
-            // Headers (#, ##, ### etc.) - vibrant purple
-            new SyntaxHighlights(@"(?m)^#{1,6} .*$", "#FF2E7E", "#FF2E7E", true, role: SyntaxHighlightRole.MarkupName),
-
-            // Bold **text** or __text__ - bright pink
-            new SyntaxHighlights(@"\*\*(.*?)\*\*", "#E18800", "#E18800", true, role: SyntaxHighlightRole.MarkupName),
-            new SyntaxHighlights(@"__(.*?)__", "#E18800", "#E18800", true, role: SyntaxHighlightRole.MarkupName),
-
-            // Italic *text* or _text_ - soft magenta
-            new SyntaxHighlights(@"\*(.*?)\*", "#C61AFF", "#C61AFF", false, true, role: SyntaxHighlightRole.MarkupName),
-            new SyntaxHighlights(@"_(.*?)_", "#C61AFF", "#C61AFF", false, true, role: SyntaxHighlightRole.MarkupName),
-
-            // Bold + Italic ***text*** or ___text___ - vibrant magenta
-            new SyntaxHighlights(@"\*\*\*(.*?)\*\*\*", "#C61AFF", "#C61AFF", true, true, role: SyntaxHighlightRole.MarkupName),
-            new SyntaxHighlights(@"___(.*?)___", "#C61AFF", "#C61AFF", true, true, role: SyntaxHighlightRole.MarkupName),
-
-            // Inline code `code` - soft yellow
-            new SyntaxHighlights(@"`.*?`", "#F1C40F", "#F1C40F", role: SyntaxHighlightRole.String),
-
-            // Code blocks ```code``` - golden yellow
-            new SyntaxHighlights(@"```[\s\S]*?```", "#F39C12", "#F39C12", role: SyntaxHighlightRole.String),
-
-            // Blockquotes > text - soft teal
-            new SyntaxHighlights(@"(?m)^> .*", "#8DA284", "#8DA284", role: SyntaxHighlightRole.Comment),
-
-            // Lists - numbers or bullets - light green
-            new SyntaxHighlights(@"(?m)^\d+\..*", "#2ECC71", "#2ECC71", role: SyntaxHighlightRole.Directive),
-            new SyntaxHighlights(@"(?m)^[-\+\*] .*", "#2ECC71", "#2ECC71", role: SyntaxHighlightRole.Directive),
-
-            // Links [text](url) - light sky blue
-            new SyntaxHighlights(@"\[.*?\]\(.*?\)", "#3498DB", "#3498DB", role: SyntaxHighlightRole.MarkupName),
-
-            // Images ![alt](url) - pink-orange
-            new SyntaxHighlights(@"!\[.*?\]\(.*?\)", "#FF6F61", "#FF6F61", role: SyntaxHighlightRole.MarkupName),
-
-            // Inline special characters - soft red
-            new SyntaxHighlights(@"[~`_\^\*\+\-\!\|]", "#E74C3C", "#E74C3C", role: SyntaxHighlightRole.Punctuation)
-            };
-        }
-    }
-    internal class CSS : SyntaxHighlightLanguage
-    {
-        public CSS()
-        {
-            this.Name = "CSS";
-            this.Author = "Julius Kirsch";
-            this.Filter = new string[2] { ".css", ".scss" };
-            this.Description = "Syntax highlighting for CSS language";
-            this.StatefulHighlightRules = new IStatefulHighlightRule[]
-            {
-                new CStyleCommentRule("#555555", "#888888", supportsLineComments: false),
-            };
-            this.AutoPairingPair = new AutoPairingPair[5]
-            {
-                new AutoPairingPair("{", "}"),
-                new AutoPairingPair("[", "]"),
-                new AutoPairingPair("(", ")"),
-                new AutoPairingPair("\""),
-                new AutoPairingPair("\'")
-            };
-            this.Highlights = new SyntaxHighlights[]
-            {
-                new SyntaxHighlights("[a-zA-Z-]+.*;", "#ff5500", "#00ffff", role: SyntaxHighlightRole.Key),//properties
-                new SyntaxHighlights("\\b([a-zA-Z_-][a-zA-Z0-9_-]*)(?=\\()", "#bb00bb", "#00ff99", role: SyntaxHighlightRole.Function),//functions
-                new SyntaxHighlights(":[a-z].*(?={)", "#0033ff", "#fffd00", role: SyntaxHighlightRole.MarkupName),//pseudo classes/elements
-                new SyntaxHighlights("(.|#|^).*\\s*{", "#227700", "#44ff00", role: SyntaxHighlightRole.MarkupName),//classname
-                new SyntaxHighlights("(?<=\\d)(?:px|%|em|rem|in|cm|mm|pt|pc|ex|ch|vw|vh|vmin|vmax|ms|s)", "#cc0000", "#ff0000", role: SyntaxHighlightRole.Type),//units
-                new SyntaxHighlights("\\b-?\\d+(?:\\.\\d+)?", "#0000ff", "#cc00ff", role: SyntaxHighlightRole.Number),//numbers
-                new SyntaxHighlights("@([^ ]+)", "#8800ff", "#ff0000", role: SyntaxHighlightRole.Directive),//first word after the @
-                new SyntaxHighlights("#[0-9A-Fa-f]{1,8}\\b", "#00bb55", "#cc00ff", role: SyntaxHighlightRole.Number),//hexadecimal
-                new SyntaxHighlights("(\".+?\"|\'.+?\')", "#00aaff", "#ff8800", role: SyntaxHighlightRole.String),//strings
-                new SyntaxHighlights("(;|:|{|}|,)", "#777777", "#bbbbbb", role: SyntaxHighlightRole.Punctuation),//special characters
-            };
-        }
-    }
-    internal class SQL : SyntaxHighlightLanguage
-    {
-        public SQL()
-        {
-            this.Name = "SQL";
-            this.Author = "Finn Freitag";
-            this.Filter = new string[1] { ".sql" };
-            this.Description = "Syntax highlightung for SQL";
-            this.Highlights = new SyntaxHighlights[]
-            {
-                new SyntaxHighlights("\\b(ADD|ADD CONSTRAINT|ALL|ALTER|ALTER COLUMN|ALTER TABLE|AND|ANY|AS|ASC|BACKUP DATABASE|BETWEEN|CASE|CHECK|COLUMN|CONSTRAINT|CREATE|CREATE DATABASE|CREATE INDEX|CREATE OR REPLACE VIEW|CREATE TABLE|CREATE PROCEDURE|CREATE UNIQUE INDEX|CREATE VIEW|DATABASE|DEFAULT|DELETE|DESC|DISTINCT|DROP|DROP COLUMN|DROP CONSTRAINT|DROP DATABASE|DROP DEFAULT|DROP INDEX|DROP TABLE|DROP VIEW|EXEC|EXISTS|FOREIGN KEY|FROM|FULL OUTER JOIN|GROUP BY|HAVING|IN|INDEX|INNER JOIN|INSERT INTO|INSERT INTO SELECT|IS NULL|IS NOT NULL|JOIN|LEFT JOIN|LIKE|LIMIT|NOT|NOT NULL|OR|ORDER BY|OUTER JOIN|PRIMARY KEY|PROCEDURE|RIGHT JOIN|ROWNUM|SELECT|SELECT DISTINCT|SELECT INTO|SELCET TOP|SET|TABLE|TOP|TRUNCATE TABLE|UNION|UNION ALL|UNIQUE|UPDATE|USE|VALUES|VIEW|WHERE)\\b","#FF6A00","#FF6A00",true,true, role: SyntaxHighlightRole.Keyword),
-                new SyntaxHighlights("\"[^\\n]*?\"","#42C22B","#42C22B", role: SyntaxHighlightRole.String),
-                new SyntaxHighlights("'[^\\n]*?'","#42C22B","#42C22B", role: SyntaxHighlightRole.String),
-                new SyntaxHighlights("\\b([+-]?(?=\\.\\d|\\d)(?:\\d+)?(?:\\.?\\d*))(?:[eE]([+-]?\\d+))?\\b", "#2B3BFF","#2B3BFF", role: SyntaxHighlightRole.Number),
-                new SyntaxHighlights("\\b(MIN|MAX|COUNT|SUM|AVG)\\b","#11C9DB","#11C9DB",false,true, role: SyntaxHighlightRole.Function),
-                new SyntaxHighlights("\\.","#901F9E","#901F9E",true, role: SyntaxHighlightRole.Punctuation)
-            };
-        }
-    }
-    internal class Lua : SyntaxHighlightLanguage
-    {
-        public Lua()
-        {
-            this.Name = "Lua";
-            this.Author = "Julius Kirsch";
-            this.Filter = new string[1] { ".lua" };
-            this.Description = "Syntax highlighting for Lua language";
-            this.StatefulHighlightRules = new IStatefulHighlightRule[]
-            {
-                new DelimitedHighlightRule("--[[", "]]", "#888888", "#646464", null, false, SyntaxHighlightRole.Comment),
-            };
-            this.AutoPairingPair = new AutoPairingPair[6]
-            {
             new AutoPairingPair("{", "}"),
             new AutoPairingPair("[", "]"),
             new AutoPairingPair("(", ")"),
             new AutoPairingPair("`", "`"),
             new AutoPairingPair("\""),
             new AutoPairingPair("\'")
-            };
+        };
 
-            this.Highlights = new SyntaxHighlights[]
-            {
-            // Numbers (decimal, hexadecimal, with/without decimal point)
-            new SyntaxHighlights("\\b(0x[\\da-fA-F]+|\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\b", "#dd00dd", "#ff00ff", role: SyntaxHighlightRole.Number),
-
-            // Keywords
-            new SyntaxHighlights("\\b(and|break|do|else|elseif|end|false|for|function|goto|if|in|local|nil|not|or|repeat|return|then|true|until|while)\\b", "#aa00cc", "#cc00ff", role: SyntaxHighlightRole.Keyword),
-
-            // Function names (assuming they are followed by `(` and may be prefixed like `mod.func`)
-            new SyntaxHighlights("\\b\\w+(?=\\s*\\()", "#cc9900", "#ffbb00", role: SyntaxHighlightRole.Function),
-
-            // Strings (single-line)
-            new SyntaxHighlights("\"([^\"\\\\]|\\\\.)*\"", "#ff5500", "#00FF00", role: SyntaxHighlightRole.String),
-            new SyntaxHighlights("'([^'\\\\]|\\\\.)*'", "#00CA00", "#00FF00", role: SyntaxHighlightRole.String),
-
-            // Comments (single-line starting with `--`)
-            new SyntaxHighlights("--.*", "#888888", "#646464", role: SyntaxHighlightRole.Comment),
-
-            // Multi-line comments (between --[[ and ]])
-            new SyntaxHighlights("--\\[\\[(.|\\r|\\n)*?\\]\\]", "#888888", "#646464", role: SyntaxHighlightRole.Comment)
-            };
-        }
-    }
-    internal class GitIgnore : SyntaxHighlightLanguage
-    {
-        public GitIgnore()
+        this.Highlights = new SyntaxHighlights[]
         {
-            this.Name = "GitIgnore";
-            this.Filter = new[] { ".gitignore" };
-            this.Description = "Syntax highlighting for Git ignore files";
+            new SyntaxHighlights("\\W", "#990033", "#CC0066", role: SyntaxHighlightRole.Punctuation),
+            new SyntaxHighlights("(\\+|\\-|\\*|/|%|\\=|\\:|\\!|>|\\<|\\?|&|\\||\\~|\\^)", "#77FF77", "#77FF77", role: SyntaxHighlightRole.Operator),
+            new SyntaxHighlights("\\b([+-]?(?=\\.\\d|\\d)(?:\\d+)?(?:\\.?\\d*))(?:[eE]([+-]?\\d+))?\\b", "#ff00ff", "#ff00ff", role: SyntaxHighlightRole.Number),
+            new SyntaxHighlights("(?<!(def\\s))(?<=^|\\s|.)[a-zA-Z_][\\w_]*(?=\\()", "#880088", "#ffbb00", role: SyntaxHighlightRole.Function),
+            new SyntaxHighlights("\\b(goto|in|instanceof|static|arguments|public|do|else|const|function|class|return|let|eval|for|if|this|break|debugger|yield|extends|enum|continue|export|null|switch|private|new|throw|while|case|await|delete|super|default|void|var|protected|package|interface|false|typeof|implements|with|import|true)\\b", "#0066bb", "#00ffff", role: SyntaxHighlightRole.Keyword),
+            new SyntaxHighlights("\\b(document|window|screen)\\b", "#008000", "#33BB00", role: SyntaxHighlightRole.Variable),
+            new SyntaxHighlights("\\b(try|catch|finally)\\b", "#9922ff", "#6666ff", role: SyntaxHighlightRole.ControlFlow),
+            new SyntaxHighlights("/[^\\n]*/i{0,1}", "#FFFF00", "#FFFF00", role: SyntaxHighlightRole.String),
+            new SyntaxHighlights("[\"'][^\\n]*?[\"']", "#ff5500", "#00FF00", role: SyntaxHighlightRole.String),
+        };
+    }
+}
+internal class Json : SyntaxHighlightLanguage
+{
+    public Json()
+    {
+        this.Name = "Json";
+        this.Author = "Julius Kirsch";
+        this.Filter = new string[1] { ".json" };
+        this.Description = "Syntax highlighting for Json language";
+        this.StatefulHighlightRules = new IStatefulHighlightRule[]
+        {
+            new CStyleCommentRule("#888888", "#646464"),
+        };
+        this.AutoPairingPair = new AutoPairingPair[4]
+        {
+            new AutoPairingPair("{", "}"),
+            new AutoPairingPair("[", "]"),
+            new AutoPairingPair("\""),
+            new AutoPairingPair("\'")
+        };
 
-            this.AutoPairingPair = new AutoPairingPair[]
-            {
-                    new AutoPairingPair("[", "]")
-            };
+        this.Highlights = new SyntaxHighlights[]
+        {
+            new SyntaxHighlights("\\b([+-]?(?=\\.\\d|\\d)(?:\\d+)?(?:\\.?\\d*))(?:[eE]([+-]?\\d+))?\\b", "#dd00dd", "#ff00ff", role: SyntaxHighlightRole.Number),
+            new SyntaxHighlights("(null|true|false)", "#00AADD", "#0099ff", role: SyntaxHighlightRole.Constant),
+            new SyntaxHighlights("(,|{|}|\\[|\\])", "#969696", "#646464", role: SyntaxHighlightRole.Punctuation),
+            new SyntaxHighlights("(\".+\")\\:", "#00CA00", "#dddd00", role: SyntaxHighlightRole.Key),
+            new SyntaxHighlights("'[^\\n]*?'", "#00CA00", "#00FF00", role: SyntaxHighlightRole.String),
+            new SyntaxHighlights("\"[^\\n]*?\"", "#00CA00", "#00FF00", role: SyntaxHighlightRole.String),
+        };
+    }
+}
+internal class PHP : SyntaxHighlightLanguage
+{
+    public PHP()
+    {
+        this.Name = "PHP";
+        this.Author = "Finn Freitag";
+        this.Filter = new string[1] { ".php" };
+        this.Description = "Syntax highlighting for PHP language";
+        this.StatefulHighlightRules = new IStatefulHighlightRule[]
+        {
+            new CStyleCommentRule(
+                "#888888",
+                "#646464",
+                supportsHashLineComments: true,
+                supportsBacktickStrings: true),
+        };
+        this.AutoPairingPair = new AutoPairingPair[2]
+        {
+            new AutoPairingPair("\""),
+            new AutoPairingPair("\'")
+        };
 
-            this.Highlights = new SyntaxHighlights[]
-            {
-                    // Negation (lines starting with !) - High priority/Warning color
-                    new SyntaxHighlights(@"^!.*", "#D32F2F", "#EF5350", role: SyntaxHighlightRole.Directive),
+        this.Highlights = new SyntaxHighlights[]
+        {
+            new SyntaxHighlights("\\<\\?php", "#FF0000", "#FF0000", role: SyntaxHighlightRole.Directive),
+            new SyntaxHighlights("\\?\\>", "#FF0000", "#FF0000", role: SyntaxHighlightRole.Directive),
+            new SyntaxHighlights("(?<!(def\\s))(?<=^|\\s|.)[a-zA-Z_][\\w_]*(?=\\()", "#3300FF", "#aa00FF", role: SyntaxHighlightRole.Function),
+            new SyntaxHighlights("\\b(echo|if|case|while|else|switch|foreach|function|default|break|null|true|false)\\b", "#0077FF", "#0077FF", role: SyntaxHighlightRole.Keyword),
+            new SyntaxHighlights("\\b([+-]?(?=\\.\\d|\\d)(?:\\d+)?(?:\\.?\\d*))(?:[eE]([+-]?\\d+))?\\b", "#ff00ff", "#ff00ff", role: SyntaxHighlightRole.Number),
+            new SyntaxHighlights("(\\+|\\-|\\*|/|%|\\=|\\:|\\!|>|\\<|\\?|&|\\||\\~|\\^)", "#77FF77", "#77FF77", role: SyntaxHighlightRole.Operator),
+            new SyntaxHighlights("\\$\\w+", "#440044", "#FFBBFF", role: SyntaxHighlightRole.Variable),
+            new SyntaxHighlights("\"[^\\n]*?\"", "#ff5500", "#00FF00", role: SyntaxHighlightRole.String),
+            new SyntaxHighlights("\\'[^\\n]*?\\'", "#ff5500", "#00FF00", role: SyntaxHighlightRole.String),
+            new SyntaxHighlights("\"/[^\\n]*/i{0,1}\"", "#ff5500", "#00FF00", role: SyntaxHighlightRole.String),
+        };
+    }
+}
+internal class QSharp : SyntaxHighlightLanguage
+{
+    public QSharp()
+    {
+        this.Name = "QSharp";
+        this.Author = "Finn Freitag";
+        this.Filter = new string[1] { ".qs" };
+        this.Description = "Syntax highlighting for QSharp language";
+        this.AutoPairingPair = new AutoPairingPair[5]
+        {
+            new AutoPairingPair("{", "}"),
+            new AutoPairingPair("[", "]"),
+            new AutoPairingPair("(", ")"),
+            new AutoPairingPair("\""),
+            new AutoPairingPair("\'")
+        };
 
-                    // Comments (lines starting with #)
-                    new SyntaxHighlights(@"#.*", "#9E9E9E", "#BDBDBD", role: SyntaxHighlightRole.Comment),
+        this.Highlights = new SyntaxHighlights[]
+        {
+            new SyntaxHighlights("\\W", "#BB0000", "#BB0000", role: SyntaxHighlightRole.Punctuation),
+            new SyntaxHighlights("\\/\\/.*", "#888888", "#646464", role: SyntaxHighlightRole.Comment),
+            new SyntaxHighlights("\\b(namespace|open|operation|using|let|H|M|Reset|return)\\b", "#0066bb", "#00ffff", role: SyntaxHighlightRole.Keyword),
+            new SyntaxHighlights("\\b(Qubit|Result)\\b", "#00bb66", "#00ff00", role: SyntaxHighlightRole.Type),
+        };
+    }
+}
+internal class XML : SyntaxHighlightLanguage
+{
+    public XML()
+    {
+        this.Name = "XML";
+        this.Author = "Julius Kirsch";
+        this.Filter = new string[2] { ".xml", ".xaml" };
+        this.Description = "Syntax highlighting for Xml language";
+        this.StatefulHighlightRules = new IStatefulHighlightRule[]
+        {
+            new DelimitedHighlightRule("<!--", "-->", "#888888", "#888888", null, false, SyntaxHighlightRole.Comment),
+        };
+        this.Highlights = new SyntaxHighlights[]
+        {
+            //numeric values (handles floating point and scientific notation)
+            new SyntaxHighlights("[+-]?(?:\\d*\\.\\d+|\\d+)(?:[eE][+-]?\\d+)?", "#dd00dd", "#ff00ff", role: SyntaxHighlightRole.Number),
+        
+            //opening tags
+            new SyntaxHighlights("<([a-zA-Z_:][\\w:.-]*)[^>]*>", "#969696", "#0099ff", role: SyntaxHighlightRole.MarkupName),
+        
+            //Closing tags
+            new SyntaxHighlights("</([a-zA-Z_:][\\w:.-]*)>", "#969696", "#0099ff", role: SyntaxHighlightRole.MarkupName),
+        
+            //Self-closing tags
+            new SyntaxHighlights("<([a-zA-Z_:][\\w:.-]*)[^>]*/>", "#969696", "#0099ff", role: SyntaxHighlightRole.MarkupName),
+        
+            //Attributes
+            new SyntaxHighlights("[a-zA-Z_:][\\w:.-]*=", "#00CA00", "#ff0000", role: SyntaxHighlightRole.AttributeName),
+        
+            //Double-quoted attribute values
+            new SyntaxHighlights("\"[^\n]*?\"", "#00CA00", "#00FF00", role: SyntaxHighlightRole.String),
+        
+            //Single-quoted attribute values
+            new SyntaxHighlights("'[^\n]*?'", "#00CA00", "#00FF00", role: SyntaxHighlightRole.String),
+        
+        };
+    }
+}
+internal class Python : SyntaxHighlightLanguage
+{
+    public Python()
+    {
+        this.Name = "Python";
+        this.Author = "Julius Kirsch";
+        this.Filter = new string[1] { ".py" };
+        this.Description = "Syntax highlighting for Python language";
+        this.StatefulHighlightRules = new IStatefulHighlightRule[]
+        {
+            new DelimitedHighlightRule("\"\"\"", "\"\"\"", "#888888", "#646464", null, false, SyntaxHighlightRole.String),
+            new DelimitedHighlightRule("'''", "'''", "#888888", "#646464", null, false, SyntaxHighlightRole.String),
+        };
+        this.AutoPairingPair = new AutoPairingPair[6]
+        {
+            new AutoPairingPair("{", "}"),
+            new AutoPairingPair("[", "]"),
+            new AutoPairingPair("(", ")"),
+            new AutoPairingPair("`", "`"),
+            new AutoPairingPair("\""),
+            new AutoPairingPair("\'")
+        };
 
-                    // Directories (entries ending with / or containing /)
-                    new SyntaxHighlights(@"[\w\-\.]+(?=/)|(?<=/ )[\w\-\.]+", "#1976D2", "#64B5F6", role: SyntaxHighlightRole.Value),
-                    new SyntaxHighlights(@"/", "#5C6BC0", "#9FA8DA", role: SyntaxHighlightRole.Punctuation),
+        this.Highlights = new SyntaxHighlights[]
+        {
+            new SyntaxHighlights("\\b([+-]?(?=\\.\\d|\\d)(?:\\d+)?(?:\\.?\\d*))(?:[eE]([+-]?\\d+))?\\b", "#dd00dd", "#ff00ff", role: SyntaxHighlightRole.Number),
+            new SyntaxHighlights("\\b(and|as|assert|break|class|continue|def|del|elif|else|except|False|finally|for|from|global|if|import|in|is|lambda|None|nonlocal|not|or|pass|raise|return|True|try|while|with|yield)\\b", "#aa00cc", "#cc00ff", role: SyntaxHighlightRole.Keyword),
+            new SyntaxHighlights("\\b(?<=def )\\w+(?=\\()|\\b\\w+(?=\\()", "#cc9900", "#ffbb00", role: SyntaxHighlightRole.Function),
+            new SyntaxHighlights("\"[^\\n]*?\"", "#ff5500", "#00FF00", role: SyntaxHighlightRole.String),
+            new SyntaxHighlights("'[^\\n]*?'", "#00CA00", "#00FF00", role: SyntaxHighlightRole.String),
+            new SyntaxHighlights("\\#.*", "#888888", "#646464", role: SyntaxHighlightRole.Comment),
+            new SyntaxHighlights(@"\""\""\""[\s\S]*?\""\""\""", "#888888", "#646464", role: SyntaxHighlightRole.Comment),
+        };
+    }
+}
+internal class CSV : SyntaxHighlightLanguage
+{
+    public CSV()
+    {
+        this.Name = "CSV";
+        this.Author = "Finn Freitag";
+        this.Filter = new string[1] { ".csv" };
+        this.Description = "Syntax highlighting for CSV language";
+        this.Highlights = new SyntaxHighlights[]
+        {
+            new SyntaxHighlights("[\\:\\,\\;\\|]", "#1b9902", "#1b9902", role: SyntaxHighlightRole.Punctuation)
+        };
+    }
+}
+internal class CSVEnhanced : SyntaxHighlightLanguage
+{
+    public CSVEnhanced()
+    {
+        this.Name = "CSV Enhanced";
+        this.Author = "Julius Kirsch";
+        this.Filter = new string[1] { ".csv" };
+        this.Description = "Enhanced syntax highlighting for CSV with alternating row colors";
 
-                    // Wildcards (*, **, ?)
-                    new SyntaxHighlights(@"\*+|(?<!\\)\?", "#7B1FA2", "#BA68C8", role: SyntaxHighlightRole.Operator),
+        this.HighlightRules = new IHighlightRule[]
+        {
+            new CsvColumnHighlightRule(),
 
-                    // Character sets/ranges [a-z]
-                    new SyntaxHighlights(@"\[[^\]]+\]", "#388E3C", "#81C784", role: SyntaxHighlightRole.Value),
+            new RegexHighlightRule(
+                new SyntaxHighlights(
+                    "[\\:\\,\\;\\|]",
+                    "#bd0020",
+                    "#f14260",
+                    role: SyntaxHighlightRole.Punctuation)
+            )
+        };
+    }
+}
+internal class LaTex : SyntaxHighlightLanguage
+{
+    public LaTex()
+    {
+        this.Name = "LaTex";
+        this.Author = "Finn Freitag";
+        this.Filter = new string[2] { ".latex", ".tex" };
+        this.Description = "Syntax highlighting for LaTex language";
+        this.Highlights = new SyntaxHighlights[]
+        {
+            new SyntaxHighlights("\\\\[a-z]+", "#0033aa", "#0088ff", role: SyntaxHighlightRole.Directive),
+            new SyntaxHighlights("%.*", "#888888", "#646464", role: SyntaxHighlightRole.Comment),
+            new SyntaxHighlights("[\\[\\]]", "#FFFF00", "#FFFF00", role: SyntaxHighlightRole.Punctuation),
+            new SyntaxHighlights("[\\{\\}]", "#FF0000", "#FF0000", role: SyntaxHighlightRole.Punctuation),
+            new SyntaxHighlights("\\$", "#00bb00", "#00FF00", role: SyntaxHighlightRole.Punctuation)
+        };
+    }
+}
+internal class Markdown : SyntaxHighlightLanguage
+{
+    public Markdown()
+    {
+        this.Name = "Markdown";
+        this.Author = "Julius Kirsch";
+        this.Filter = new string[1] { ".md" };
+        this.Description = "Syntax highlighting for Markdown language";
+        this.StatefulHighlightRules = new IStatefulHighlightRule[]
+        {
+            new DelimitedHighlightRule("```", "```", "#F39C12", "#F39C12", null, false, SyntaxHighlightRole.String),
+        };
+        this.Highlights = new SyntaxHighlights[]
+        {
+        // Headers (#, ##, ### etc.) - vibrant purple
+        new SyntaxHighlights(@"(?m)^#{1,6} .*$", "#FF2E7E", "#FF2E7E", true, role: SyntaxHighlightRole.MarkupName),
 
-                    // Escaped characters (\#, \!, \ )
-                    new SyntaxHighlights(@"\\.", "#F57C00", "#FFB74D", role: SyntaxHighlightRole.String),
-            
-                    // Trailing spaces (often a mistake in .gitignore)
-                    new SyntaxHighlights(@"\s+$", "#C62828", "#FF5252", role: SyntaxHighlightRole.Value),
-            };
-        }
+        // Bold **text** or __text__ - bright pink
+        new SyntaxHighlights(@"\*\*(.*?)\*\*", "#E18800", "#E18800", true, role: SyntaxHighlightRole.MarkupName),
+        new SyntaxHighlights(@"__(.*?)__", "#E18800", "#E18800", true, role: SyntaxHighlightRole.MarkupName),
+
+        // Italic *text* or _text_ - soft magenta
+        new SyntaxHighlights(@"\*(.*?)\*", "#C61AFF", "#C61AFF", false, true, role: SyntaxHighlightRole.MarkupName),
+        new SyntaxHighlights(@"_(.*?)_", "#C61AFF", "#C61AFF", false, true, role: SyntaxHighlightRole.MarkupName),
+
+        // Bold + Italic ***text*** or ___text___ - vibrant magenta
+        new SyntaxHighlights(@"\*\*\*(.*?)\*\*\*", "#C61AFF", "#C61AFF", true, true, role: SyntaxHighlightRole.MarkupName),
+        new SyntaxHighlights(@"___(.*?)___", "#C61AFF", "#C61AFF", true, true, role: SyntaxHighlightRole.MarkupName),
+
+        // Inline code `code` - soft yellow
+        new SyntaxHighlights(@"`.*?`", "#F1C40F", "#F1C40F", role: SyntaxHighlightRole.String),
+
+        // Code blocks ```code``` - golden yellow
+        new SyntaxHighlights(@"```[\s\S]*?```", "#F39C12", "#F39C12", role: SyntaxHighlightRole.String),
+
+        // Blockquotes > text - soft teal
+        new SyntaxHighlights(@"(?m)^> .*", "#8DA284", "#8DA284", role: SyntaxHighlightRole.Comment),
+
+        // Lists - numbers or bullets - light green
+        new SyntaxHighlights(@"(?m)^\d+\..*", "#2ECC71", "#2ECC71", role: SyntaxHighlightRole.Directive),
+        new SyntaxHighlights(@"(?m)^[-\+\*] .*", "#2ECC71", "#2ECC71", role: SyntaxHighlightRole.Directive),
+
+        // Links [text](url) - light sky blue
+        new SyntaxHighlights(@"\[.*?\]\(.*?\)", "#3498DB", "#3498DB", role: SyntaxHighlightRole.MarkupName),
+
+        // Images ![alt](url) - pink-orange
+        new SyntaxHighlights(@"!\[.*?\]\(.*?\)", "#FF6F61", "#FF6F61", role: SyntaxHighlightRole.MarkupName),
+
+        // Inline special characters - soft red
+        new SyntaxHighlights(@"[~`_\^\*\+\-\!\|]", "#E74C3C", "#E74C3C", role: SyntaxHighlightRole.Punctuation)
+        };
+    }
+}
+internal class CSS : SyntaxHighlightLanguage
+{
+    public CSS()
+    {
+        this.Name = "CSS";
+        this.Author = "Julius Kirsch";
+        this.Filter = new string[2] { ".css", ".scss" };
+        this.Description = "Syntax highlighting for CSS language";
+        this.StatefulHighlightRules = new IStatefulHighlightRule[]
+        {
+            new CStyleCommentRule("#555555", "#888888", supportsLineComments: false),
+        };
+        this.AutoPairingPair = new AutoPairingPair[5]
+        {
+            new AutoPairingPair("{", "}"),
+            new AutoPairingPair("[", "]"),
+            new AutoPairingPair("(", ")"),
+            new AutoPairingPair("\""),
+            new AutoPairingPair("\'")
+        };
+        this.Highlights = new SyntaxHighlights[]
+        {
+            new SyntaxHighlights("[a-zA-Z-]+.*;", "#ff5500", "#00ffff", role: SyntaxHighlightRole.Key),//properties
+            new SyntaxHighlights("\\b([a-zA-Z_-][a-zA-Z0-9_-]*)(?=\\()", "#bb00bb", "#00ff99", role: SyntaxHighlightRole.Function),//functions
+            new SyntaxHighlights(":[a-z].*(?={)", "#0033ff", "#fffd00", role: SyntaxHighlightRole.MarkupName),//pseudo classes/elements
+            new SyntaxHighlights("(.|#|^).*\\s*{", "#227700", "#44ff00", role: SyntaxHighlightRole.MarkupName),//classname
+            new SyntaxHighlights("(?<=\\d)(?:px|%|em|rem|in|cm|mm|pt|pc|ex|ch|vw|vh|vmin|vmax|ms|s)", "#cc0000", "#ff0000", role: SyntaxHighlightRole.Type),//units
+            new SyntaxHighlights("\\b-?\\d+(?:\\.\\d+)?", "#0000ff", "#cc00ff", role: SyntaxHighlightRole.Number),//numbers
+            new SyntaxHighlights("@([^ ]+)", "#8800ff", "#ff0000", role: SyntaxHighlightRole.Directive),//first word after the @
+            new SyntaxHighlights("#[0-9A-Fa-f]{1,8}\\b", "#00bb55", "#cc00ff", role: SyntaxHighlightRole.Number),//hexadecimal
+            new SyntaxHighlights("(\".+?\"|\'.+?\')", "#00aaff", "#ff8800", role: SyntaxHighlightRole.String),//strings
+            new SyntaxHighlights("(;|:|{|}|,)", "#777777", "#bbbbbb", role: SyntaxHighlightRole.Punctuation),//special characters
+        };
+    }
+}
+internal class SQL : SyntaxHighlightLanguage
+{
+    public SQL()
+    {
+        this.Name = "SQL";
+        this.Author = "Finn Freitag";
+        this.Filter = new string[1] { ".sql" };
+        this.Description = "Syntax highlightung for SQL";
+        this.Highlights = new SyntaxHighlights[]
+        {
+            new SyntaxHighlights("\\b(ADD|ADD CONSTRAINT|ALL|ALTER|ALTER COLUMN|ALTER TABLE|AND|ANY|AS|ASC|BACKUP DATABASE|BETWEEN|CASE|CHECK|COLUMN|CONSTRAINT|CREATE|CREATE DATABASE|CREATE INDEX|CREATE OR REPLACE VIEW|CREATE TABLE|CREATE PROCEDURE|CREATE UNIQUE INDEX|CREATE VIEW|DATABASE|DEFAULT|DELETE|DESC|DISTINCT|DROP|DROP COLUMN|DROP CONSTRAINT|DROP DATABASE|DROP DEFAULT|DROP INDEX|DROP TABLE|DROP VIEW|EXEC|EXISTS|FOREIGN KEY|FROM|FULL OUTER JOIN|GROUP BY|HAVING|IN|INDEX|INNER JOIN|INSERT INTO|INSERT INTO SELECT|IS NULL|IS NOT NULL|JOIN|LEFT JOIN|LIKE|LIMIT|NOT|NOT NULL|OR|ORDER BY|OUTER JOIN|PRIMARY KEY|PROCEDURE|RIGHT JOIN|ROWNUM|SELECT|SELECT DISTINCT|SELECT INTO|SELCET TOP|SET|TABLE|TOP|TRUNCATE TABLE|UNION|UNION ALL|UNIQUE|UPDATE|USE|VALUES|VIEW|WHERE)\\b","#FF6A00","#FF6A00",true,true, role: SyntaxHighlightRole.Keyword),
+            new SyntaxHighlights("\"[^\\n]*?\"","#42C22B","#42C22B", role: SyntaxHighlightRole.String),
+            new SyntaxHighlights("'[^\\n]*?'","#42C22B","#42C22B", role: SyntaxHighlightRole.String),
+            new SyntaxHighlights("\\b([+-]?(?=\\.\\d|\\d)(?:\\d+)?(?:\\.?\\d*))(?:[eE]([+-]?\\d+))?\\b", "#2B3BFF","#2B3BFF", role: SyntaxHighlightRole.Number),
+            new SyntaxHighlights("\\b(MIN|MAX|COUNT|SUM|AVG)\\b","#11C9DB","#11C9DB",false,true, role: SyntaxHighlightRole.Function),
+            new SyntaxHighlights("\\.","#901F9E","#901F9E",true, role: SyntaxHighlightRole.Punctuation)
+        };
+    }
+}
+internal class Lua : SyntaxHighlightLanguage
+{
+    public Lua()
+    {
+        this.Name = "Lua";
+        this.Author = "Julius Kirsch";
+        this.Filter = new string[1] { ".lua" };
+        this.Description = "Syntax highlighting for Lua language";
+        this.StatefulHighlightRules = new IStatefulHighlightRule[]
+        {
+            new DelimitedHighlightRule("--[[", "]]", "#888888", "#646464", null, false, SyntaxHighlightRole.Comment),
+        };
+        this.AutoPairingPair = new AutoPairingPair[6]
+        {
+        new AutoPairingPair("{", "}"),
+        new AutoPairingPair("[", "]"),
+        new AutoPairingPair("(", ")"),
+        new AutoPairingPair("`", "`"),
+        new AutoPairingPair("\""),
+        new AutoPairingPair("\'")
+        };
+
+        this.Highlights = new SyntaxHighlights[]
+        {
+        // Numbers (decimal, hexadecimal, with/without decimal point)
+        new SyntaxHighlights("\\b(0x[\\da-fA-F]+|\\d+\\.?\\d*|\\.\\d+)([eE][+-]?\\d+)?\\b", "#dd00dd", "#ff00ff", role: SyntaxHighlightRole.Number),
+
+        // Keywords
+        new SyntaxHighlights("\\b(and|break|do|else|elseif|end|false|for|function|goto|if|in|local|nil|not|or|repeat|return|then|true|until|while)\\b", "#aa00cc", "#cc00ff", role: SyntaxHighlightRole.Keyword),
+
+        // Function names (assuming they are followed by `(` and may be prefixed like `mod.func`)
+        new SyntaxHighlights("\\b\\w+(?=\\s*\\()", "#cc9900", "#ffbb00", role: SyntaxHighlightRole.Function),
+
+        // Strings (single-line)
+        new SyntaxHighlights("\"([^\"\\\\]|\\\\.)*\"", "#ff5500", "#00FF00", role: SyntaxHighlightRole.String),
+        new SyntaxHighlights("'([^'\\\\]|\\\\.)*'", "#00CA00", "#00FF00", role: SyntaxHighlightRole.String),
+
+        // Comments (single-line starting with `--`)
+        new SyntaxHighlights("--.*", "#888888", "#646464", role: SyntaxHighlightRole.Comment),
+
+        // Multi-line comments (between --[[ and ]])
+        new SyntaxHighlights("--\\[\\[(.|\\r|\\n)*?\\]\\]", "#888888", "#646464", role: SyntaxHighlightRole.Comment)
+        };
+    }
+}
+internal class GitIgnore : SyntaxHighlightLanguage
+{
+    public GitIgnore()
+    {
+        this.Name = "GitIgnore";
+        this.Filter = new[] { ".gitignore" };
+        this.Description = "Syntax highlighting for Git ignore files";
+
+        this.AutoPairingPair = new AutoPairingPair[]
+        {
+                new AutoPairingPair("[", "]")
+        };
+
+        this.Highlights = new SyntaxHighlights[]
+        {
+                // Negation (lines starting with !) - High priority/Warning color
+                new SyntaxHighlights(@"^!.*", "#D32F2F", "#EF5350", role: SyntaxHighlightRole.Directive),
+
+                // Comments (lines starting with #)
+                new SyntaxHighlights(@"#.*", "#9E9E9E", "#BDBDBD", role: SyntaxHighlightRole.Comment),
+
+                // Directories (entries ending with / or containing /)
+                new SyntaxHighlights(@"[\w\-\.]+(?=/)|(?<=/ )[\w\-\.]+", "#1976D2", "#64B5F6", role: SyntaxHighlightRole.Value),
+                new SyntaxHighlights(@"/", "#5C6BC0", "#9FA8DA", role: SyntaxHighlightRole.Punctuation),
+
+                // Wildcards (*, **, ?)
+                new SyntaxHighlights(@"\*+|(?<!\\)\?", "#7B1FA2", "#BA68C8", role: SyntaxHighlightRole.Operator),
+
+                // Character sets/ranges [a-z]
+                new SyntaxHighlights(@"\[[^\]]+\]", "#388E3C", "#81C784", role: SyntaxHighlightRole.Value),
+
+                // Escaped characters (\#, \!, \ )
+                new SyntaxHighlights(@"\\.", "#F57C00", "#FFB74D", role: SyntaxHighlightRole.String),
+        
+                // Trailing spaces (often a mistake in .gitignore)
+                new SyntaxHighlights(@"\s+$", "#C62828", "#FF5252", role: SyntaxHighlightRole.Value),
+        };
+    }
+}
+
+internal sealed class Go : SyntaxHighlightLanguage
+{
+    public Go()
+    {
+        Name = "Go";
+        Filter = [".go"];
+        Description = "Syntax highlighting for Go source files";
+        AutoPairingPair = LanguageDefinitionHelpers.CStylePairs(includeBackticks: true);
+        StatefulHighlightRules =
+        [
+            new CStyleCommentRule(
+                LanguageDefinitionHelpers.CommentLight,
+                LanguageDefinitionHelpers.CommentDark,
+                supportsRawBacktickStrings: true),
+            new DelimitedHighlightRule(
+                "`",
+                "`",
+                LanguageDefinitionHelpers.StringLight,
+                LanguageDefinitionHelpers.StringDark,
+                role: SyntaxHighlightRole.String),
+        ];
+        Highlights =
+        [
+            LanguageDefinitionHelpers.Rule(
+                @"\b(?:0[bB][01](?:_?[01])*|0[oO][0-7](?:_?[0-7])*|0[xX][0-9A-Fa-f](?:_?[0-9A-Fa-f])*|(?:\d(?:_?\d)*)?\.\d(?:_?\d)*(?:[eE][+-]?\d(?:_?\d)*)?|\d(?:_?\d)*(?:[eE][+-]?\d(?:_?\d)*)?)(?:i)?\b",
+                SyntaxHighlightRole.Number),
+            LanguageDefinitionHelpers.Rule(
+                @"\b(?:break|case|continue|default|defer|else|fallthrough|for|go|goto|if|range|return|select|switch)\b",
+                SyntaxHighlightRole.ControlFlow),
+            LanguageDefinitionHelpers.Rule(
+                @"\b(?:chan|const|func|import|interface|map|package|struct|type|var)\b",
+                SyntaxHighlightRole.Keyword),
+            LanguageDefinitionHelpers.Rule(
+                @"\b(?:any|bool|byte|comparable|complex64|complex128|error|float32|float64|int|int8|int16|int32|int64|rune|string|uint|uint8|uint16|uint32|uint64|uintptr)\b",
+                SyntaxHighlightRole.Type),
+            LanguageDefinitionHelpers.Rule(
+                @"\b(?:false|iota|nil|true)\b",
+                SyntaxHighlightRole.Constant),
+            LanguageDefinitionHelpers.Rule(
+                @"\b[A-Za-z_]\w*(?=\s*\()",
+                SyntaxHighlightRole.Function),
+            LanguageDefinitionHelpers.Rule(
+                "\"(?:\\\\.|[^\"\\\\])*\"|'(?:\\\\.|[^'\\\\])*'",
+                SyntaxHighlightRole.String),
+            LanguageDefinitionHelpers.Rule(
+                @"<<|>>|&\^|:=|\.\.\.|==|!=|<=|>=|&&|\|\||\+\+|--|[+\-*/%&|^<>=!:]",
+                SyntaxHighlightRole.Operator),
+        ];
+    }
+}
+
+internal sealed class VisualBasic : SyntaxHighlightLanguage
+{
+    public VisualBasic()
+    {
+        Name = "Visual Basic .NET";
+        Filter = [".vb"];
+        Description = "Syntax highlighting for Visual Basic .NET source files";
+        AutoPairingPair = LanguageDefinitionHelpers.BasicPairs();
+        StatefulHighlightRules = [new BasicCommentRule()];
+        Highlights = BasicLanguageDefinition.CreateHighlights(includeVbaKeywords: false);
+    }
+}
+
+internal sealed class Vba : SyntaxHighlightLanguage
+{
+    public Vba()
+    {
+        Name = "Visual Basic for Applications";
+        Filter = [".bas", ".cls", ".frm", ".vba"];
+        Description = "Syntax highlighting for exported VBA modules";
+        AutoPairingPair = LanguageDefinitionHelpers.BasicPairs();
+        StatefulHighlightRules = [new BasicCommentRule()];
+        Highlights = BasicLanguageDefinition.CreateHighlights(includeVbaKeywords: true);
+    }
+}
+
+internal sealed class Bash : SyntaxHighlightLanguage
+{
+    public Bash()
+    {
+        Name = "Shell/Bash";
+        Filter = [".sh", ".bash", ".zsh"];
+        Description = "Syntax highlighting for Bash and compatible shell scripts";
+        AutoPairingPair = LanguageDefinitionHelpers.CStylePairs(includeBackticks: true);
+        StatefulHighlightRules =
+        [
+            new CStyleCommentRule(
+                LanguageDefinitionHelpers.CommentLight,
+                LanguageDefinitionHelpers.CommentDark,
+                supportsLineComments: false,
+                supportsHashLineComments: true,
+                supportsBacktickStrings: true,
+                supportsBlockComments: false,
+                hashLineCommentsRequireTokenBoundary: true),
+        ];
+        Highlights =
+        [
+            LanguageDefinitionHelpers.Rule(
+                @"\b(?:case|coproc|do|done|elif|else|esac|fi|for|function|if|in|select|then|time|until|while)\b",
+                SyntaxHighlightRole.ControlFlow),
+            LanguageDefinitionHelpers.Rule(
+                @"\b(?:alias|bg|bind|break|builtin|caller|cd|command|compgen|complete|continue|declare|dirs|disown|echo|enable|eval|exec|exit|export|false|fc|fg|getopts|hash|help|history|jobs|kill|let|local|logout|mapfile|popd|printf|pushd|pwd|read|readonly|return|set|shift|shopt|source|suspend|test|times|trap|true|type|typeset|ulimit|umask|unalias|unset|wait)\b",
+                SyntaxHighlightRole.Keyword),
+            LanguageDefinitionHelpers.Rule(
+                @"\$\{[^}\r\n]+\}|\$[A-Za-z_][A-Za-z0-9_]*|\$[0-9@*#?$!_-]",
+                SyntaxHighlightRole.Variable),
+            LanguageDefinitionHelpers.Rule(
+                "\"(?:\\\\.|[^\"\\\\])*\"|'[^']*'|`(?:\\\\.|[^`\\\\])*`",
+                SyntaxHighlightRole.String),
+            LanguageDefinitionHelpers.Rule(@"\b\d+\b", SyntaxHighlightRole.Number),
+            LanguageDefinitionHelpers.Rule(@"&&|\|\||<<|>>|;;|;&|;;&|[|&;<>]", SyntaxHighlightRole.Operator),
+        ];
+    }
+}
+
+internal sealed class PowerShell : SyntaxHighlightLanguage
+{
+    public PowerShell()
+    {
+        Name = "PowerShell";
+        Filter = [".ps1", ".psm1", ".psd1"];
+        Description = "Syntax highlighting for PowerShell scripts and data files";
+        AutoPairingPair = LanguageDefinitionHelpers.CStylePairs();
+        StatefulHighlightRules =
+        [
+            new PowerShellLineCommentRule(
+                LanguageDefinitionHelpers.CommentLight,
+                LanguageDefinitionHelpers.CommentDark),
+            new DelimitedHighlightRule(
+                "<#",
+                "#>",
+                LanguageDefinitionHelpers.CommentLight,
+                LanguageDefinitionHelpers.CommentDark,
+                role: SyntaxHighlightRole.Comment),
+        ];
+        Highlights =
+        [
+            LanguageDefinitionHelpers.Rule(
+                @"(?i)\b(?:begin|break|catch|class|continue|data|define|do|dynamicparam|else|elseif|end|enum|exit|filter|finally|for|foreach|from|function|if|in|param|process|return|switch|throw|trap|try|until|using|while)\b",
+                SyntaxHighlightRole.ControlFlow),
+            LanguageDefinitionHelpers.Rule(
+                @"(?i)\b(?:workflow|parallel|sequence|inlinescript|configuration|hidden|static)\b",
+                SyntaxHighlightRole.Keyword),
+            LanguageDefinitionHelpers.Rule(@"\$\{[^}\r\n]+\}|\$[A-Za-z_][\w:]*|\$[?^_$]", SyntaxHighlightRole.Variable),
+            LanguageDefinitionHelpers.Rule(@"(?<!\w)-[A-Za-z][\w-]*", SyntaxHighlightRole.Directive),
+            LanguageDefinitionHelpers.Rule(@"\b[A-Za-z]+-[A-Za-z][\w-]*\b", SyntaxHighlightRole.Function),
+            LanguageDefinitionHelpers.Rule(
+                "\"(?:`.|[^\"])*\"|'(?:''|[^'])*'",
+                SyntaxHighlightRole.String),
+            LanguageDefinitionHelpers.Rule(@"(?i)\$(?:false|null|true)\b", SyntaxHighlightRole.Constant),
+            LanguageDefinitionHelpers.Rule(@"\b(?:0[xX][0-9A-Fa-f]+|\d+(?:\.\d+)?)\b", SyntaxHighlightRole.Number),
+            LanguageDefinitionHelpers.Rule(@"(?i)-(?:and|as|band|bor|bxor|contains|eq|ge|gt|in|is|isnot|le|like|lt|match|ne|not|notcontains|notin|notlike|notmatch|or|replace|shl|shr|split|xor)\b", SyntaxHighlightRole.Operator),
+        ];
+    }
+}
+
+internal sealed class Rust : SyntaxHighlightLanguage
+{
+    public Rust()
+    {
+        Name = "Rust";
+        Filter = [".rs"];
+        Description = "Syntax highlighting for Rust source files";
+        AutoPairingPair = LanguageDefinitionHelpers.CStylePairs();
+        StatefulHighlightRules =
+        [
+            new CStyleCommentRule(
+                LanguageDefinitionHelpers.CommentLight,
+                LanguageDefinitionHelpers.CommentDark),
+        ];
+        Highlights =
+        [
+            LanguageDefinitionHelpers.Rule(
+                @"\b(?:as|async|await|break|const|continue|crate|dyn|else|enum|extern|false|fn|for|if|impl|in|let|loop|match|mod|move|mut|pub|ref|return|self|Self|static|struct|super|trait|true|type|union|unsafe|use|where|while|yield)\b",
+                SyntaxHighlightRole.Keyword),
+            LanguageDefinitionHelpers.Rule(
+                @"\b(?:bool|char|f32|f64|i8|i16|i32|i64|i128|isize|str|u8|u16|u32|u64|u128|usize)\b",
+                SyntaxHighlightRole.Type),
+            LanguageDefinitionHelpers.Rule(@"\b(?:false|None|Some|true)\b", SyntaxHighlightRole.Constant),
+            LanguageDefinitionHelpers.Rule(@"\b[A-Za-z_]\w*(?=\s*!?\s*\()", SyntaxHighlightRole.Function),
+            LanguageDefinitionHelpers.Rule(
+                "b?r(?<hash>#{0,255})\"[\\s\\S]*?\"\\k<hash>|b?\"(?:\\\\.|[^\"\\\\])*\"|b?'(?:\\\\.|[^'\\\\])+'",
+                SyntaxHighlightRole.String),
+            LanguageDefinitionHelpers.Rule(
+                @"\b(?:0[bB][01_]+|0[oO][0-7_]+|0[xX][0-9A-Fa-f_]+|\d[\d_]*(?:\.\d[\d_]*)?(?:[eE][+-]?[\d_]+)?)(?:[iu](?:8|16|32|64|128|size)|f(?:32|64))?\b",
+                SyntaxHighlightRole.Number),
+            LanguageDefinitionHelpers.Rule(@"#\!?\s*\[", SyntaxHighlightRole.Directive),
+            LanguageDefinitionHelpers.Rule(@"=>|->|::|\.\.=|\.\.|==|!=|<=|>=|&&|\|\||<<|>>|[+\-*/%&|^<>=!?:]", SyntaxHighlightRole.Operator),
+        ];
+    }
+}
+
+internal sealed class Yaml : SyntaxHighlightLanguage
+{
+    public Yaml()
+    {
+        Name = "YAML";
+        Filter = [".yaml", ".yml"];
+        Description = "Syntax highlighting for YAML documents";
+        AutoPairingPair = LanguageDefinitionHelpers.BasicPairs();
+        StatefulHighlightRules =
+        [
+            new YamlCommentRule(
+                LanguageDefinitionHelpers.CommentLight,
+                LanguageDefinitionHelpers.CommentDark),
+        ];
+        Highlights =
+        [
+            LanguageDefinitionHelpers.Rule("(?m)^\\s*(?:-\\s+)?(?:[^\\s#][^:#\\r\\n]*|\"(?:\\\\.|[^\"])*\"|'(?:''|[^'])*')(?=\\s*:)", SyntaxHighlightRole.Key),
+            LanguageDefinitionHelpers.Rule(@"(?:^|\s)[&*][A-Za-z0-9_.-]+", SyntaxHighlightRole.Variable),
+            LanguageDefinitionHelpers.Rule(@"(?:^|\s)![A-Za-z0-9_./:-]+", SyntaxHighlightRole.Directive),
+            LanguageDefinitionHelpers.Rule("\"(?:\\\\.|[^\"\\\\])*\"|'(?:''|[^'])*'", SyntaxHighlightRole.String),
+            LanguageDefinitionHelpers.Rule(@"(?i)\b(?:false|null|true|yes|no|on|off|~)\b", SyntaxHighlightRole.Constant),
+            LanguageDefinitionHelpers.Rule(@"(?<![\w.-])[-+]?(?:0[xX][0-9A-Fa-f_]+|0[oO][0-7_]+|\d[\d_]*(?:\.\d[\d_]*)?(?:[eE][-+]?\d+)?)(?![\w.-])", SyntaxHighlightRole.Number),
+            LanguageDefinitionHelpers.Rule(@"(?m)^\s*(?:---|\.\.\.)\s*$|[|>]([-+]?\d*)?\s*$", SyntaxHighlightRole.Directive),
+            LanguageDefinitionHelpers.Rule(@"[\[\]{},?:-]", SyntaxHighlightRole.Punctuation),
+        ];
+    }
+}
+
+internal sealed class Dockerfile : SyntaxHighlightLanguage
+{
+    public Dockerfile()
+    {
+        Name = "Dockerfile";
+        Filter = ["Dockerfile", ".dockerfile"];
+        Description = "Syntax highlighting for Dockerfiles";
+        AutoPairingPair = LanguageDefinitionHelpers.CStylePairs();
+        Highlights =
+        [
+            LanguageDefinitionHelpers.Rule(@"(?m)^\s*#.*$", SyntaxHighlightRole.Comment),
+            LanguageDefinitionHelpers.Rule(
+                @"(?im)^\s*(?:ADD|ARG|CMD|COPY|ENTRYPOINT|ENV|EXPOSE|FROM|HEALTHCHECK|LABEL|MAINTAINER|ONBUILD|RUN|SHELL|STOPSIGNAL|USER|VOLUME|WORKDIR)\b",
+                SyntaxHighlightRole.Directive),
+            LanguageDefinitionHelpers.Rule(@"\$\{[^}\r\n]+\}|\$[A-Za-z_][A-Za-z0-9_]*", SyntaxHighlightRole.Variable),
+            LanguageDefinitionHelpers.Rule(@"(?<!\w)--[a-z][a-z-]*(?:=[^\s]+)?", SyntaxHighlightRole.AttributeName),
+            LanguageDefinitionHelpers.Rule("\"(?:\\\\.|[^\"\\\\])*\"|'[^']*'", SyntaxHighlightRole.String),
+            LanguageDefinitionHelpers.Rule(@"\b\d+(?::\d+)?(?:/(?:tcp|udp))?\b", SyntaxHighlightRole.Number),
+            LanguageDefinitionHelpers.Rule(@"(?m)^\s*#.*$", SyntaxHighlightRole.Comment),
+        ];
+    }
+}
+
+internal sealed class Hcl : SyntaxHighlightLanguage
+{
+    public Hcl()
+    {
+        Name = "HCL";
+        Filter = [".hcl", ".tf", ".tfvars"];
+        Description = "Syntax highlighting for HCL and Terraform files";
+        AutoPairingPair = LanguageDefinitionHelpers.CStylePairs();
+        StatefulHighlightRules =
+        [
+            new CStyleCommentRule(
+                LanguageDefinitionHelpers.CommentLight,
+                LanguageDefinitionHelpers.CommentDark,
+                supportsHashLineComments: true),
+        ];
+        Highlights =
+        [
+            LanguageDefinitionHelpers.Rule(
+                @"\b(?:data|dynamic|for|if|in|locals|module|output|provider|resource|terraform|variable)\b",
+                SyntaxHighlightRole.Keyword),
+            LanguageDefinitionHelpers.Rule(@"(?m)^\s*[A-Za-z_][\w-]*(?=\s*=)", SyntaxHighlightRole.Key),
+            LanguageDefinitionHelpers.Rule(@"\b[A-Za-z_][\w-]*(?=\s*\()", SyntaxHighlightRole.Function),
+            LanguageDefinitionHelpers.Rule(@"\$\{[^}\r\n]+\}", SyntaxHighlightRole.Variable),
+            LanguageDefinitionHelpers.Rule("\"(?:\\\\.|[^\"\\\\])*\"", SyntaxHighlightRole.String),
+            LanguageDefinitionHelpers.Rule(@"\b(?:false|null|true)\b", SyntaxHighlightRole.Constant),
+            LanguageDefinitionHelpers.Rule(@"(?<![\w.])[-+]?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?(?![\w.])", SyntaxHighlightRole.Number),
+            LanguageDefinitionHelpers.Rule(@"=>|\.\.\.|==|!=|<=|>=|&&|\|\||[+\-*/%<>=!?:]", SyntaxHighlightRole.Operator),
+        ];
+    }
+}
+
+internal static class BasicLanguageDefinition
+{
+    public static SyntaxHighlights[] CreateHighlights(bool includeVbaKeywords)
+    {
+        string declarationKeywords = includeVbaKeywords
+            ? "Alias|As|ByRef|ByVal|Call|Const|Declare|Dim|Enum|Event|Function|Get|Global|Implements|Let|Lib|New|Optional|ParamArray|Private|Property|Public|ReDim|Set|Static|Sub|Type"
+            : "As|Async|ByRef|ByVal|Class|Const|Custom|Delegate|Dim|Enum|Event|Function|Get|Implements|Imports|Inherits|Interface|Iterator|Module|Namespace|New|Of|Operator|Optional|ParamArray|Private|Property|Protected|Public|ReadOnly|Set|Shared|Static|Structure|Sub|WriteOnly";
+        string controlFlowKeywords = includeVbaKeywords
+            ? "Case|Do|Each|Else|ElseIf|End|Error|Exit|For|GoSub|GoTo|If|Loop|Next|On|Resume|Return|Select|Step|Then|To|Wend|While|With"
+            : "Await|Case|Catch|Continue|Do|Each|Else|ElseIf|End|Exit|Finally|For|If|Loop|Next|Return|Select|Step|Then|Throw|To|Try|Until|When|While|With|Yield";
+        string types = includeVbaKeywords
+            ? "Boolean|Byte|Collection|Currency|Date|Decimal|Double|Integer|Long|LongLong|LongPtr|Object|Single|String|Variant"
+            : "Boolean|Byte|Char|Date|Decimal|Double|Integer|Long|Object|SByte|Short|Single|String|UInteger|ULong|UShort";
+
+        return
+        [
+            LanguageDefinitionHelpers.Rule($@"(?i)\b(?:{declarationKeywords})\b", SyntaxHighlightRole.Keyword),
+            LanguageDefinitionHelpers.Rule($@"(?i)\b(?:{controlFlowKeywords})\b", SyntaxHighlightRole.ControlFlow),
+            LanguageDefinitionHelpers.Rule($@"(?i)\b(?:{types})\b", SyntaxHighlightRole.Type),
+            LanguageDefinitionHelpers.Rule(@"(?i)\b(?:False|Me|MyBase|MyClass|Nothing|True)\b", SyntaxHighlightRole.Constant),
+            LanguageDefinitionHelpers.Rule(@"\b[A-Za-z_]\w*(?=\s*\()", SyntaxHighlightRole.Function),
+            LanguageDefinitionHelpers.Rule("\"(?:\"\"|[^\"])*\"", SyntaxHighlightRole.String),
+            LanguageDefinitionHelpers.Rule(@"#[^#\r\n]+#", SyntaxHighlightRole.Constant),
+            LanguageDefinitionHelpers.Rule(@"(?im)^\s*#(?:Const|Else|ElseIf|End\s+If|End\s+Region|ExternalSource|If|Region)\b.*$", SyntaxHighlightRole.Directive),
+            LanguageDefinitionHelpers.Rule(@"(?i)(?<![\w.])(?:&H[0-9A-F]+|&O[0-7]+|\d+(?:\.\d+)?(?:E[-+]?\d+)?)(?:D|F|I|L|R|S|UI|UL|US|@|!|#|%|&|\^)?\b", SyntaxHighlightRole.Number),
+            LanguageDefinitionHelpers.Rule(@"<>|<=|>=|<<|>>|\+=|-=|\*=|/=|\\=|\^=|&=|[+\-*/\\^&=<>]", SyntaxHighlightRole.Operator),
+        ];
+    }
+}
+
+internal static class LanguageDefinitionHelpers
+{
+    public const string CommentLight = "#6B6A6A";
+    public const string CommentDark = "#646464";
+    public const string StringLight = "#A31515";
+    public const string StringDark = "#CE9178";
+
+    public static AutoPairingPair[] CStylePairs(bool includeBackticks = false)
+    {
+        return includeBackticks
+            ?
+            [
+                new AutoPairingPair("{", "}"),
+                new AutoPairingPair("[", "]"),
+                new AutoPairingPair("(", ")"),
+                new AutoPairingPair("\""),
+                new AutoPairingPair("'"),
+                new AutoPairingPair("`"),
+            ]
+            :
+            [
+                new AutoPairingPair("{", "}"),
+                new AutoPairingPair("[", "]"),
+                new AutoPairingPair("(", ")"),
+                new AutoPairingPair("\""),
+                new AutoPairingPair("'"),
+            ];
+    }
+
+    public static AutoPairingPair[] BasicPairs()
+    {
+        return
+        [
+            new AutoPairingPair("(", ")"),
+            new AutoPairingPair("[", "]"),
+            new AutoPairingPair("{", "}"),
+            new AutoPairingPair("\""),
+        ];
+    }
+
+    public static SyntaxHighlights Rule(string pattern, SyntaxHighlightRole role)
+    {
+        (string light, string dark) = role switch
+        {
+            SyntaxHighlightRole.Comment => (CommentLight, CommentDark),
+            SyntaxHighlightRole.String => (StringLight, StringDark),
+            SyntaxHighlightRole.Number => ("#098658", "#B5CEA8"),
+            SyntaxHighlightRole.Type => ("#267F99", "#4EC9B0"),
+            SyntaxHighlightRole.Function => ("#795E26", "#DCDCAA"),
+            SyntaxHighlightRole.Constant => ("#0000FF", "#569CD6"),
+            SyntaxHighlightRole.Operator => ("#7A3E9D", "#D4D4D4"),
+            SyntaxHighlightRole.Punctuation => ("#555555", "#D4D4D4"),
+            SyntaxHighlightRole.Variable => ("#001080", "#9CDCFE"),
+            SyntaxHighlightRole.Key => ("#0451A5", "#9CDCFE"),
+            SyntaxHighlightRole.AttributeName => ("#795E26", "#D7BA7D"),
+            SyntaxHighlightRole.Directive => ("#AF00DB", "#C586C0"),
+            SyntaxHighlightRole.ControlFlow => ("#AF00DB", "#C586C0"),
+            _ => ("#0000FF", "#569CD6"),
+        };
+
+        return new SyntaxHighlights(pattern, light, dark, role: role);
     }
 }

@@ -106,4 +106,155 @@ public sealed class PopularLanguageSyntaxTests
         Assert.AreEqual(line.IndexOf("//", StringComparison.Ordinal), highlights[0].Start);
         Assert.AreEqual(SyntaxHighlightRole.Comment, highlights[0].Role);
     }
+
+    [TestMethod]
+    public void BashComment_OverridesEveryTokenInsideComment()
+    {
+        const string line = "# if test \"$value\" && 42";
+
+        Assert.AreEqual(
+            SyntaxHighlightRole.Comment,
+            GetFinalRoleAt(SyntaxHighlightID.Bash, line, line.IndexOf("test", StringComparison.Ordinal)));
+        Assert.AreEqual(
+            SyntaxHighlightRole.Comment,
+            GetFinalRoleAt(SyntaxHighlightID.Bash, line, line.IndexOf("$value", StringComparison.Ordinal)));
+    }
+
+    [TestMethod]
+    public void BashHashInsideStringOrWord_DoesNotStartComment()
+    {
+        const string quotedLine = "echo \"# if test\" # while";
+        const string wordLine = "echo value#suffix";
+
+        Assert.AreEqual(
+            SyntaxHighlightRole.String,
+            GetFinalRoleAt(SyntaxHighlightID.Bash, quotedLine, quotedLine.IndexOf('#')));
+        Assert.AreEqual(
+            SyntaxHighlightRole.Comment,
+            GetFinalRoleAt(SyntaxHighlightID.Bash, quotedLine, quotedLine.LastIndexOf('#')));
+        Assert.AreNotEqual(
+            SyntaxHighlightRole.Comment,
+            GetFinalRoleAt(SyntaxHighlightID.Bash, wordLine, wordLine.IndexOf('#')));
+    }
+
+    [TestMethod]
+    public void PowerShellLineComment_RespectsStringsAndOverridesTokens()
+    {
+        const string line = "Write-Host \"# $false\" # foreach $true";
+
+        Assert.AreEqual(
+            SyntaxHighlightRole.String,
+            GetFinalRoleAt(SyntaxHighlightID.PowerShell, line, line.IndexOf('#')));
+        Assert.AreEqual(
+            SyntaxHighlightRole.Comment,
+            GetFinalRoleAt(SyntaxHighlightID.PowerShell, line, line.LastIndexOf('#')));
+        Assert.AreEqual(
+            SyntaxHighlightRole.Comment,
+            GetFinalRoleAt(SyntaxHighlightID.PowerShell, line, line.IndexOf("foreach", StringComparison.Ordinal)));
+    }
+
+    [TestMethod]
+    public void PowerShellHereString_DoesNotTreatHashAsComment()
+    {
+        SyntaxHighlightLanguage language = CoreTextControlBox.GetSyntaxHighlightingFromID(
+            SyntaxHighlightID.PowerShell);
+        PowerShellLineCommentRule rule = language.StatefulHighlightRules
+            .OfType<PowerShellLineCommentRule>()
+            .Single();
+        List<HighlightSpan> highlights = [];
+
+        int state = rule.GetStateAfterLine(0, "$text = @\"".AsSpan(), rule.InitialState);
+        rule.GetHighlights(1, "# foreach $true".AsSpan(), state, highlights);
+
+        Assert.AreNotEqual(rule.InitialState, state);
+        Assert.IsEmpty(highlights);
+        Assert.AreEqual(
+            rule.InitialState,
+            rule.GetStateAfterLine(2, "\"@".AsSpan(), state));
+    }
+
+    [TestMethod]
+    public void YamlComment_RespectsQuotedScalarsAndOverridesTokens()
+    {
+        const string line = "value: \"# true\" # false: 42";
+
+        Assert.AreEqual(
+            SyntaxHighlightRole.String,
+            GetFinalRoleAt(SyntaxHighlightID.YAML, line, line.IndexOf('#')));
+        Assert.AreEqual(
+            SyntaxHighlightRole.Comment,
+            GetFinalRoleAt(SyntaxHighlightID.YAML, line, line.LastIndexOf('#')));
+        Assert.AreEqual(
+            SyntaxHighlightRole.Comment,
+            GetFinalRoleAt(SyntaxHighlightID.YAML, line, line.IndexOf("false", StringComparison.Ordinal)));
+    }
+
+    [TestMethod]
+    public void YamlBlockScalar_DoesNotTreatHashAsComment()
+    {
+        SyntaxHighlightLanguage language = CoreTextControlBox.GetSyntaxHighlightingFromID(
+            SyntaxHighlightID.YAML);
+        YamlCommentRule rule = language.StatefulHighlightRules
+            .OfType<YamlCommentRule>()
+            .Single();
+        List<HighlightSpan> highlights = [];
+
+        int state = rule.GetStateAfterLine(0, "script: |".AsSpan(), rule.InitialState);
+        rule.GetHighlights(1, "  echo \"# true\"".AsSpan(), state, highlights);
+
+        Assert.AreNotEqual(rule.InitialState, state);
+        Assert.IsEmpty(highlights);
+        Assert.AreEqual(
+            rule.InitialState,
+            rule.GetStateAfterLine(2, "enabled: true".AsSpan(), state));
+    }
+
+    [TestMethod]
+    public void DockerfileComment_IsAppliedAfterEmbeddedTokens()
+    {
+        const string comment = "# RUN echo ${HOME} \"text\" 42";
+        const string command = "RUN echo \"# ${HOME}\"";
+
+        Assert.AreEqual(
+            SyntaxHighlightRole.Comment,
+            GetFinalRoleAt(SyntaxHighlightID.Dockerfile, comment, comment.IndexOf("RUN", StringComparison.Ordinal)));
+        Assert.AreEqual(
+            SyntaxHighlightRole.Comment,
+            GetFinalRoleAt(SyntaxHighlightID.Dockerfile, comment, comment.IndexOf("${HOME}", StringComparison.Ordinal)));
+        Assert.AreEqual(
+            SyntaxHighlightRole.String,
+            GetFinalRoleAt(SyntaxHighlightID.Dockerfile, command, command.IndexOf('#')));
+    }
+
+    private static SyntaxHighlightRole GetFinalRoleAt(
+        SyntaxHighlightID languageId,
+        string line,
+        int characterIndex)
+    {
+        SyntaxHighlightLanguage language = CoreTextControlBox.GetSyntaxHighlightingFromID(languageId);
+        language.CompileAllRegex();
+        SyntaxHighlightRole role = SyntaxHighlightRole.Custom;
+
+        foreach (SyntaxHighlights highlight in language.Highlights)
+        {
+            foreach (System.Text.RegularExpressions.Match match in highlight.PrecompiledRegex.Matches(line))
+            {
+                if (characterIndex >= match.Index && characterIndex < match.Index + match.Length)
+                    role = highlight.Role;
+            }
+        }
+
+        foreach (IStatefulHighlightRule rule in language.StatefulHighlightRules ?? [])
+        {
+            List<HighlightSpan> spans = [];
+            rule.GetHighlights(0, line.AsSpan(), rule.InitialState, spans);
+            foreach (HighlightSpan span in spans)
+            {
+                if (characterIndex >= span.Start && characterIndex < span.Start + span.Length)
+                    role = span.Role;
+            }
+        }
+
+        return role;
+    }
 }

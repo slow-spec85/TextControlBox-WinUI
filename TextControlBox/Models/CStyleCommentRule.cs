@@ -17,7 +17,9 @@ internal sealed class CStyleCommentRule : IFragmentAwareStatefulHighlightRule
     private readonly Windows.UI.Color colorLight;
     private readonly Windows.UI.Color colorDark;
     private readonly bool supportsLineComments;
+    private readonly bool supportsBlockComments;
     private readonly bool supportsHashLineComments;
+    private readonly bool hashLineCommentsRequireTokenBoundary;
     private readonly bool supportsBacktickStrings;
     private readonly bool supportsRawBacktickStrings;
     private readonly bool supportsVerbatimStrings;
@@ -31,12 +33,16 @@ internal sealed class CStyleCommentRule : IFragmentAwareStatefulHighlightRule
         bool supportsBacktickStrings = false,
         bool supportsRawBacktickStrings = false,
         bool supportsVerbatimStrings = false,
-        bool supportsRawStrings = false)
+        bool supportsRawStrings = false,
+        bool supportsBlockComments = true,
+        bool hashLineCommentsRequireTokenBoundary = false)
     {
         this.colorLight = ParseColor(colorLight, nameof(colorLight));
         this.colorDark = ParseColor(colorDark, nameof(colorDark));
         this.supportsLineComments = supportsLineComments;
+        this.supportsBlockComments = supportsBlockComments;
         this.supportsHashLineComments = supportsHashLineComments;
+        this.hashLineCommentsRequireTokenBoundary = hashLineCommentsRequireTokenBoundary;
         this.supportsBacktickStrings = supportsBacktickStrings;
         this.supportsRawBacktickStrings = supportsRawBacktickStrings;
         this.supportsVerbatimStrings = supportsVerbatimStrings;
@@ -123,7 +129,7 @@ internal sealed class CStyleCommentRule : IFragmentAwareStatefulHighlightRule
             if (character == '/' && position + 1 < line.Length)
             {
                 char nextCharacter = line[position + 1];
-                if (nextCharacter == '*')
+                if (supportsBlockComments && nextCharacter == '*')
                 {
                     int commentEnd = ScanComment(line, position, highlights);
                     if (commentEnd < 0)
@@ -140,7 +146,9 @@ internal sealed class CStyleCommentRule : IFragmentAwareStatefulHighlightRule
                 }
             }
 
-            if (supportsHashLineComments && character == '#')
+            if (supportsHashLineComments
+                && character == '#'
+                && IsHashLineCommentStart(line, position))
             {
                 AddHighlight(position, line.Length, highlights);
                 return OutsideComment;
@@ -260,7 +268,7 @@ internal sealed class CStyleCommentRule : IFragmentAwareStatefulHighlightRule
             if (character == '/' && position + 1 < line.Length)
             {
                 char nextCharacter = line[position + 1];
-                if (nextCharacter == '*')
+                if (supportsBlockComments && nextCharacter == '*')
                 {
                     initialState = OutsideComment;
                     return true;
@@ -270,13 +278,18 @@ internal sealed class CStyleCommentRule : IFragmentAwareStatefulHighlightRule
                     break;
             }
 
-            if (character == '*' && position + 1 < line.Length && line[position + 1] == '/')
+            if (supportsBlockComments
+                && character == '*'
+                && position + 1 < line.Length
+                && line[position + 1] == '/')
             {
                 initialState = InsideComment;
                 return true;
             }
 
-            if (supportsHashLineComments && character == '#')
+            if (supportsHashLineComments
+                && character == '#'
+                && IsHashLineCommentStart(line, position))
                 break;
 
             if (character == '"')
@@ -483,6 +496,16 @@ internal sealed class CStyleCommentRule : IFragmentAwareStatefulHighlightRule
             || quotePosition > 1
                 && line[quotePosition - 1] == '$'
                 && line[quotePosition - 2] == '@';
+    }
+
+    private bool IsHashLineCommentStart(ReadOnlySpan<char> line, int position)
+    {
+        if (!hashLineCommentsRequireTokenBoundary || position == 0)
+            return true;
+
+        char precedingCharacter = line[position - 1];
+        return char.IsWhiteSpace(precedingCharacter)
+            || precedingCharacter is ';' or '|' or '&' or '(' or ')' or '<' or '>';
     }
 
     private static Windows.UI.Color ParseColor(string value, string parameterName)

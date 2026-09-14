@@ -4,36 +4,35 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace TextControlBoxNS.Core.Renderer
+namespace TextControlBoxNS.Core.Renderer;
+
+internal class CanvasBatchRedrawer
 {
-    internal class CanvasBatchRedrawer
+    private readonly HashSet<CanvasControl> _redrawRequests = new();
+    private readonly DispatcherQueueTimer _timer;
+
+    public CanvasBatchRedrawer(int batchIntervalMs = 16)
     {
-        private readonly HashSet<CanvasControl> _redrawRequests = new();
-        private readonly DispatcherQueueTimer _timer;
-
-        public CanvasBatchRedrawer(int batchIntervalMs = 16)
+        _timer = DispatcherQueue.GetForCurrentThread().CreateTimer();
+        _timer.Interval = TimeSpan.FromMilliseconds(batchIntervalMs);
+        _timer.Tick += (s, e) =>
         {
-            _timer = DispatcherQueue.GetForCurrentThread().CreateTimer();
-            _timer.Interval = TimeSpan.FromMilliseconds(batchIntervalMs);
-            _timer.Tick += (s, e) =>
+            CanvasControl[] pendingRedraws = _redrawRequests.ToArray();
+            _redrawRequests.Clear();
+            _timer.Stop();
+
+            foreach (CanvasControl canvas in pendingRedraws)
             {
-                CanvasControl[] pendingRedraws = _redrawRequests.ToArray();
-                _redrawRequests.Clear();
-                _timer.Stop();
+                canvas.Invalidate();
+            }
+        };
+    }
 
-                foreach (CanvasControl canvas in pendingRedraws)
-                {
-                    canvas.Invalidate();
-                }
-            };
-        }
+    public void RequestRedraw(CanvasControl canvas)
+    {
+        _redrawRequests.Add(canvas);
 
-        public void RequestRedraw(CanvasControl canvas)
-        {
-            _redrawRequests.Add(canvas);
-
-            if (!_timer.IsRunning)
-                _timer.Start();
-        }
+        if (!_timer.IsRunning)
+            _timer.Start();
     }
 }
