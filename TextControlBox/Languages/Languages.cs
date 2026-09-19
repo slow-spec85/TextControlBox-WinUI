@@ -884,6 +884,9 @@ internal sealed class Go : SyntaxHighlightLanguage
                 @"\b(?:0[bB][01](?:_?[01])*|0[oO][0-7](?:_?[0-7])*|0[xX][0-9A-Fa-f](?:_?[0-9A-Fa-f])*|(?:\d(?:_?\d)*)?\.\d(?:_?\d)*(?:[eE][+-]?\d(?:_?\d)*)?|\d(?:_?\d)*(?:[eE][+-]?\d(?:_?\d)*)?)(?:i)?\b",
                 SyntaxHighlightRole.Number),
             LanguageDefinitionHelpers.Rule(
+                @"\b[A-Za-z_]\w*(?=\s*\()",
+                SyntaxHighlightRole.Function),
+            LanguageDefinitionHelpers.Rule(
                 @"\b(?:break|case|continue|default|defer|else|fallthrough|for|go|goto|if|range|return|select|switch)\b",
                 SyntaxHighlightRole.ControlFlow),
             LanguageDefinitionHelpers.Rule(
@@ -895,9 +898,6 @@ internal sealed class Go : SyntaxHighlightLanguage
             LanguageDefinitionHelpers.Rule(
                 @"\b(?:false|iota|nil|true)\b",
                 SyntaxHighlightRole.Constant),
-            LanguageDefinitionHelpers.Rule(
-                @"\b[A-Za-z_]\w*(?=\s*\()",
-                SyntaxHighlightRole.Function),
             LanguageDefinitionHelpers.Rule(
                 "\"(?:\\\\.|[^\"\\\\])*\"|'(?:\\\\.|[^'\\\\])*'",
                 SyntaxHighlightRole.String),

@@ -60,6 +60,23 @@ public sealed class PopularLanguageSyntaxTests
     }
 
     [TestMethod]
+    [DataRow("import (", "import", SyntaxHighlightRole.Keyword)]
+    [DataRow("var (", "var", SyntaxHighlightRole.Keyword)]
+    [DataRow("func (value int) {}", "func", SyntaxHighlightRole.Keyword)]
+    [DataRow("func main() {}", "func", SyntaxHighlightRole.Keyword)]
+    [DataRow("func main() {}", "main", SyntaxHighlightRole.Function)]
+    [DataRow("fmt.Println(value)", "Println", SyntaxHighlightRole.Function)]
+    public void GoKeywordBeforeParenthesis_DoesNotBecomeFunction(
+        string line,
+        string token,
+        SyntaxHighlightRole expectedRole)
+    {
+        Assert.AreEqual(
+            expectedRole,
+            GetFinalRoleAt(SyntaxHighlightID.Go, line, line.IndexOf(token, StringComparison.Ordinal)));
+    }
+
+    [TestMethod]
     public void VisualBasicCommentRule_IgnoresApostropheInsideString()
     {
         BasicCommentRule rule = new();
