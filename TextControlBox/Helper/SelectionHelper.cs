@@ -16,6 +16,9 @@ internal class SelectionHelper
         if (textRenderer.DrawnTextLayout == null || !selectionManager.HasSelection)
             return false;
 
+        if (textRenderer.IsWordWrapEnabled)
+            pointerPosition.Y -= textRenderer.BackgroundVerticalOffset;
+
         CanvasTextLayoutRegion[] regions = textRenderer.DrawnTextLayout.GetCharacterRegions(selectionManager.currentTextSelection.renderedIndex, selectionManager.currentTextSelection.renderedLength);
         for (int i = 0; i < regions.Length; i++)
         {

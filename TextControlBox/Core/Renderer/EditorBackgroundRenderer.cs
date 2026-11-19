@@ -52,38 +52,21 @@ internal sealed class EditorBackgroundRenderer
         CanvasDrawEventArgs args,
         float lineGutterWidth)
     {
-        float fontSize = zoomManager.ZoomedFontSize;
-        float lineHeight = fontSize + textManager._LineSpacing;
-        if (lineHeight <= 0 || textManager.LinesCount == 0)
+        if (GetViewport(canvas.ActualHeight) is not { VisibleLineCount: > 0 } viewport)
             return;
 
-        int firstVisibleLine = Math.Min(
-            (int)((scrollManager.VerticalScroll * scrollManager.DefaultVerticalScrollSensitivity) / lineHeight),
-            textManager.LinesCount);
-        int visibleLineCount = Math.Min(
-            (int)(canvas.ActualHeight / lineHeight),
-            textManager.LinesCount - firstVisibleLine);
-        if (visibleLineCount <= 0)
-            return;
-
-        float topOffset = lineHeight / scrollManager.DefaultVerticalScrollSensitivity;
-        EditorRenderViewport viewport = new(
-            firstVisibleLine,
-            visibleLineCount,
-            lineHeight,
-            topOffset);
         float textViewportWidth = Math.Max(0, (float)canvas.ActualWidth - lineGutterWidth);
 
-        lineGutterRenderer.Draw(canvas, args, viewport, lineGutterWidth);
+        bool hasLineGutter = lineGutterRenderer.DrawBackground(canvas, args, viewport, lineGutterWidth);
 
         lineDecorationStore.AppendVisibleDecorations(
-            firstVisibleLine,
+            viewport.FirstVisibleLine,
             viewport.LastVisibleLine,
             visibleDecorations);
         foreach (ResolvedLineDecoration decoration in visibleDecorations)
         {
-            float y = ((decoration.StartLine - firstVisibleLine) * lineHeight) + viewport.TopOffset;
-            float height = (decoration.EndLine - decoration.StartLine + 1) * lineHeight;
+            float y = viewport.GetLineTop(decoration.StartLine);
+            float height = viewport.GetLineTop(decoration.EndLine + 1) - y;
             args.DrawingSession.FillRectangle(
                 Utils.CreateLineAlignedRect(
                     lineGutterWidth,
@@ -94,25 +77,53 @@ internal sealed class EditorBackgroundRenderer
                 decoration.BackgroundColor);
         }
 
-        if (lineHighlighterRenderer.CanRender(focusManager)
-            && cursorManager.LineNumber >= firstVisibleLine
-            && cursorManager.LineNumber <= viewport.LastVisibleLine)
-        {
-            float currentLineY = ((cursorManager.LineNumber - firstVisibleLine) * lineHeight) + viewport.TopOffset;
-            lineHighlighterRenderer.Render(
-                textViewportWidth,
-                currentLineY,
-                lineHeight,
-                canvas.DpiScale,
-                args,
-                designHelper.LineHighlighterBrush,
-                lineGutterWidth);
-        }
-
         textDecorationRenderer.DrawBackgroundAndBorder(
             args,
             textRenderer,
             canvas.DpiScale,
             lineGutterWidth);
+
+        DrawCurrentLineHighlight(canvas, args, viewport);
+        if (hasLineGutter)
+            lineGutterRenderer.DrawMarkers(canvas, args, viewport, lineGutterWidth, textRenderer.TextVerticalOffset);
+    }
+
+    public void DrawCurrentLineHighlight(CanvasControl canvas, CanvasDrawEventArgs args)
+    {
+        if (GetViewport(canvas.ActualHeight) is { VisibleLineCount: > 0 } viewport)
+            DrawCurrentLineHighlight(canvas, args, viewport);
+    }
+
+    private void DrawCurrentLineHighlight(CanvasControl canvas, CanvasDrawEventArgs args, EditorRenderViewport viewport)
+    {
+        if (lineHighlighterRenderer.CanRender(focusManager))
+        {
+            lineHighlighterRenderer.Render(
+                args.DrawingSession,
+                viewport,
+                cursorManager.LineNumber,
+                (float)canvas.ActualWidth,
+                canvas.DpiScale,
+                designHelper.LineHighlighterBrush);
+        }
+    }
+
+    private EditorRenderViewport? GetViewport(double height)
+    {
+        if (textRenderer.IsWordWrapEnabled)
+            return textRenderer.WrappedViewport;
+
+        float lineHeight = zoomManager.ZoomedFontSize + textManager._LineSpacing;
+        if (lineHeight <= 0 || textManager.LinesCount == 0)
+            return null;
+
+        int firstVisibleLine = Math.Min(
+            (int)((scrollManager.VerticalScroll * scrollManager.DefaultVerticalScrollSensitivity) / lineHeight),
+            textManager.LinesCount);
+        int visibleLineCount = Math.Min(
+            (int)(height / lineHeight),
+            textManager.LinesCount - firstVisibleLine);
+        float topOffset = lineHeight / scrollManager.DefaultVerticalScrollSensitivity;
+        return new EditorRenderViewport(firstVisibleLine, visibleLineCount, lineHeight, topOffset);
     }
 }

@@ -185,6 +185,7 @@ internal sealed partial class CoreTextControlBox : UserControl
         tabSpaceManager.Init(textManager, selectionManager, cursorManager, textActionManager, undoRedo, longestLineManager, eventsManager);
         searchManager.Init(textManager);
         eventsManager.Init(searchManager, cursorManager);
+        eventsManager.DocumentChanged += _ => textRenderer.InvalidateWrappedDocument();
         lineNumberRenderer.Init(
             textManager,
             textLayoutManager,
@@ -645,7 +646,8 @@ internal sealed partial class CoreTextControlBox : UserControl
                 return;
             }
 
-            lineNumberRenderer.Draw(Canvas_LineNumber, args, lineNumberManager._SpaceBetweenLineNumberAndText);
+            editorBackgroundRenderer.DrawCurrentLineHighlight(sender, args);
+            lineNumberRenderer.Draw(sender, args, lineNumberManager._SpaceBetweenLineNumberAndText);
         }
         catch (Exception ex)
         {
@@ -1100,7 +1102,7 @@ internal sealed partial class CoreTextControlBox : UserControl
         if (res.Selection != null)
         {
             selectionManager.SetSelection(res.Selection);
-            ScrollLineIntoView(CursorPosition.LineNumber);
+            ScrollSearchMatchIntoView();
         }
         return res.Result;
     }
@@ -1114,7 +1116,7 @@ internal sealed partial class CoreTextControlBox : UserControl
         if (res.Selection != null)
         {
             selectionManager.SetSelection(res.Selection);
-            ScrollLineIntoView(CursorPosition.LineNumber);
+            ScrollSearchMatchIntoView();
         }
         return res.Result;
     }
@@ -1124,6 +1126,14 @@ internal sealed partial class CoreTextControlBox : UserControl
         var res = searchManager.BeginSearch(word, wholeWord, matchCase);
         canvasUpdateManager.UpdateText();
         return res;
+    }
+
+    private void ScrollSearchMatchIntoView()
+    {
+        if (IsWordWrapEnabled)
+            scrollManager.ScrollWrappedCursorIntoView(center: true);
+        else
+            ScrollLineIntoView(CursorPosition.LineNumber);
     }
 
     public void EndSearch()
@@ -1168,6 +1178,15 @@ internal sealed partial class CoreTextControlBox : UserControl
 
     public Point GetCursorPosition()
     {
+        if (IsWordWrapEnabled && textRenderer.TryGetWrappedScrollRow(CursorPosition.LineNumber, null, out _))
+        {
+            textRenderer.UpdateCurrentLineTextLayout(canvasText);
+            return TextRenderer.GetWrappedCaretPosition(
+                textRenderer.CurrentLineTextLayout,
+                CursorPosition.CharacterPosition,
+                textRenderer.GetWrappedLineTop(CursorPosition.LineNumber));
+        }
+
         return new Point
         {
             Y = (float)((CursorPosition.LineNumber - textRenderer.NumberOfStartLine) * textRenderer.SingleLineHeight) + textRenderer.SingleLineHeight / scrollManager.DefaultVerticalScrollSensitivity,
@@ -1200,8 +1219,15 @@ internal sealed partial class CoreTextControlBox : UserControl
         {
             this.DispatcherQueue.TryEnqueue(() =>
             {
-                scrollManager.ScrollLineIntoView(lineNumber);
-                scrollManager.ScrollIntoViewHorizontal(canvasText);
+                if (IsWordWrapEnabled)
+                {
+                    scrollManager.ScrollWrappedCursorIntoView(center: true);
+                }
+                else
+                {
+                    scrollManager.ScrollLineIntoView(lineNumber);
+                    scrollManager.ScrollIntoViewHorizontal(canvasText);
+                }
             });
         }
         else //updates in the if condition happen on scrolling, only update cursor when not scrolling:
@@ -1360,6 +1386,8 @@ internal sealed partial class CoreTextControlBox : UserControl
                 return;
 
             lineNumberManager._ShowLineNumbers = value;
+            if (value)
+                textRenderer.NeedsTextFormatUpdate = true;
             UpdateLineNumberCanvasVisibility();
             textRenderer.NeedsUpdateTextLayout = true;
             lineNumberRenderer.NeedsUpdateLineNumbers();
@@ -1371,12 +1399,60 @@ internal sealed partial class CoreTextControlBox : UserControl
     public bool ShowLineHighlighter
     {
         get => lineHighlighterManager._ShowLineHighlighter;
-        set { lineHighlighterManager._ShowLineHighlighter = value; canvasUpdateManager.UpdateBackground(); }
+        set
+        {
+            if (lineHighlighterManager._ShowLineHighlighter == value)
+                return;
+
+            lineHighlighterManager._ShowLineHighlighter = value;
+            canvasUpdateManager.UpdateBackground();
+            if (!value && ShowLineNumbers)
+                canvasUpdateManager.UpdateLineNumbers();
+        }
     }
 
     public int ZoomFactor { get => zoomManager._ZoomFactor; set { zoomManager._ZoomFactor = value; zoomManager.UpdateZoom(); } } //%
 
-    public bool IsReadOnly { get => textManager._IsReadOnly; set { textManager._IsReadOnly = inputHandler.IsReadOnly = value; } }
+    public bool IsReadOnly
+    {
+        get => textManager._IsReadOnly;
+        set
+        {
+            textManager._IsReadOnly = inputHandler.IsReadOnly = value;
+            if (!value)
+                IsWordWrapEnabled = false;
+        }
+    }
+
+    public bool IsWordWrapEnabled
+    {
+        get => textRenderer.IsWordWrapEnabled;
+        set
+        {
+            bool enabled = value && IsReadOnly;
+            if (enabled == textRenderer.IsWordWrapEnabled)
+                return;
+
+            textRenderer.SetWordWrap(enabled);
+            if (enabled)
+                HorizontalScrollbar.Maximum = 0;
+
+            HorizontalScrollbar.Visibility = enabled ? Visibility.Collapsed : Visibility.Visible;
+            canvasUpdateManager.UpdateAll();
+            canvasUpdateManager.UpdateLineNumbers();
+        }
+    }
+
+    public int GetLineIndexAt(double viewportY)
+    {
+        if (textManager.LinesCount == 0 || ActualLineHeight <= 0 || !double.IsFinite(viewportY) || viewportY < 0)
+            return -1;
+
+        if (IsWordWrapEnabled)
+            return textRenderer.GetWrappedLineAt(viewportY);
+
+        return Math.Clamp((int)((viewportY + VerticalScroll) / ActualLineHeight), 0, textManager.LinesCount - 1);
+    }
 
     public CursorSize CursorSize { get => cursorRenderer._CursorSize; set { cursorRenderer._CursorSize = value; canvasUpdateManager.UpdateCursor(); } }
 

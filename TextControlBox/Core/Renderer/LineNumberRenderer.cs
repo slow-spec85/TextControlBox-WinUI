@@ -41,12 +41,16 @@ internal class LineNumberRenderer
         this.scrollManager = scrollManager;
     }
 
-    public void GenerateLineNumberText(int renderedLines, int startLine)
+    public void GenerateLineNumberText(int renderedLines, int startLine, WrappedLineLayout wrapLayout = null)
     {
         //TODO! check performance:
         for (int i = 0; i < renderedLines; i++)
         {
-            LineNumberContent.AppendLine(lineNumberManager.GetLabel(i + startLine));
+            int line = startLine + i;
+            LineNumberContent.AppendLine(lineNumberManager.GetLabel(line));
+            int rows = wrapLayout?.GetRowCount(line) ?? 1;
+            for (int row = 1; row < rows; row++)
+                LineNumberContent.AppendLine();
         }
         LineNumberTextToRender = LineNumberContent.ToString();
         LineNumberContent.Clear();
@@ -120,6 +124,15 @@ internal class LineNumberRenderer
 
     private void GenerateVisibleLineNumberText(CanvasControl canvas)
     {
+        if (textRenderer.IsWordWrapEnabled)
+        {
+            if (textRenderer.WrappedViewport is { } viewport)
+                GenerateLineNumberText(viewport.VisibleLineCount, viewport.FirstVisibleLine, viewport.WrapLayout);
+            else
+                LineNumberTextToRender = "";
+            return;
+        }
+
         float lineHeight = textLayoutManager.LineHeight;
         if (lineHeight <= 0 || canvas.ActualHeight <= 0 || textManager.LinesCount <= 0)
         {
@@ -155,7 +168,10 @@ internal class LineNumberRenderer
     {
         if (lineNumberManager._ShowLineNumbers)
         {
-            GenerateLineNumberText(textRenderer.NumberOfRenderedLines, textRenderer.NumberOfStartLine);
+            GenerateLineNumberText(
+                textRenderer.NumberOfRenderedLines,
+                textRenderer.NumberOfStartLine,
+                textRenderer.WrappedViewport?.WrapLayout);
         }
     }
 }

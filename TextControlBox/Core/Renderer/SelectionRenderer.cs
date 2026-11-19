@@ -199,7 +199,7 @@ internal class SelectionRenderer
                 textRenderer.DrawnTextLayout,
                 args,
                 textRenderer.HorizontalOffset,
-                textRenderer.SingleLineHeight / scrollManager.DefaultVerticalScrollSensitivity,
+                textRenderer.BackgroundVerticalOffset,
                 textRenderer.NumberOfStartLine,
                 textRenderer.NumberOfRenderedLines,
                 zoomManager.ZoomedFontSize,

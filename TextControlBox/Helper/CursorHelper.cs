@@ -41,6 +41,17 @@ internal class CursorHelper
 
     public static void UpdateCursorPosFromPoint(CanvasControl canvasText, CurrentLineManager currentLineManager, TextRenderer textRenderer, ScrollManager scrollManager, Point point, CursorPosition cursorPos)
     {
+        if (textRenderer.IsWordWrapEnabled)
+        {
+            int line = textRenderer.GetWrappedLineAt(point.Y);
+            if (line >= 0)
+            {
+                cursorPos.LineNumber = line;
+                cursorPos.CharacterPosition = textRenderer.HitTestWrappedLine(line, point);
+            }
+            return;
+        }
+
         //Apply an offset to the cursorposition to make selection easier
         point.X += textRenderer.SingleLineHeight / scrollManager.DefaultVerticalScrollSensitivity;
         

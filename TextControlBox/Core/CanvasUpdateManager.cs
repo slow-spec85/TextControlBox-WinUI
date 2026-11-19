@@ -52,6 +52,9 @@ internal class CanvasUpdateManager
     }
     public void UpdateBackground()
     {
+        if (coreTextbox.ShowLineHighlighter && coreTextbox.ShowLineNumbers)
+            UpdateLineNumbers();
+
         if (!coreTextbox.canvasDecorations.ReadyToDraw)
             return;
 

@@ -1,5 +1,5 @@
 ﻿using Microsoft.Graphics.Canvas.Brushes;
-using Microsoft.Graphics.Canvas.UI.Xaml;
+using Microsoft.Graphics.Canvas;
 using TextControlBoxNS.Core.Selection;
 using TextControlBoxNS.Helper;
 
@@ -16,19 +16,20 @@ internal class LineHighlighterRenderer
     }
 
     public void Render(
-        float canvasWidth,
-        float y,
-        float lineHeight,
+        CanvasDrawingSession drawingSession,
+        EditorRenderViewport viewport,
+        int line,
+        float width,
         float dpiScale,
-        CanvasDrawEventArgs args,
-        CanvasSolidColorBrush backgroundBrush,
-        float x = 0)
+        CanvasSolidColorBrush backgroundBrush)
     {
-        if (backgroundBrush == null)
+        if (backgroundBrush == null || line < viewport.FirstVisibleLine || line > viewport.LastVisibleLine)
             return;
 
-        args.DrawingSession.FillRectangle(
-            Utils.CreateLineAlignedRect(x, y, canvasWidth, lineHeight, dpiScale),
+        float y = viewport.GetLineTop(line);
+        float height = viewport.GetLineRowCount(line) * viewport.LineHeight;
+        drawingSession.FillRectangle(
+            Utils.CreateLineAlignedRect(0, y, width, height, dpiScale),
             backgroundBrush);
     }
 

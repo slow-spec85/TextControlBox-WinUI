@@ -67,8 +67,7 @@ internal sealed class TextDecorationRenderer
             return;
 
         Prepare(textRenderer.NumberOfStartLine, textRenderer.NumberOfRenderedLines);
-        float marginTop = textRenderer.SingleLineHeight
-            / scrollManager.DefaultVerticalScrollSensitivity;
+        float marginTop = textRenderer.BackgroundVerticalOffset;
 
         foreach (RenderedTextRangeDecoration decoration in renderedDecorations)
         {

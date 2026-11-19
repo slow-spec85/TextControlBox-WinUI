@@ -54,7 +54,7 @@ internal class LinkHighlightManager
         bool isOverLink = false;
         foreach (var link in links)
         {
-            if (link.Bounds.Contains(position))
+            if (ContainsPosition(link, position))
             {
                 coreTextControlBox.ChangeCursor(Microsoft.UI.Input.InputSystemCursorShape.Hand);
                 isOverLink = true;
@@ -76,7 +76,7 @@ internal class LinkHighlightManager
     {
         foreach (var link in links)
         {
-            if (link.Bounds.Contains(position))
+            if (ContainsPosition(link, position))
             {
                 eventsManager.CallLinkClicked(link.Url);
                 break;
@@ -87,5 +87,16 @@ internal class LinkHighlightManager
     public bool NeedsCheckLinkHighlights()
     {
         return HighlightLinks && links.Count > 0;
+    }
+
+    private bool ContainsPosition(LinkInfo link, Point position)
+    {
+        if (!textRenderer.IsWordWrapEnabled)
+            return link.Bounds.Contains(position);
+
+        position.Y -= textRenderer.TextVerticalOffset;
+        return link.Bounds.Contains(position) && textRenderer.DrawnTextLayout
+            .GetCharacterRegions(link.StartIndex, link.Length)
+            .Any(region => region.LayoutBounds.Contains(position));
     }
 }

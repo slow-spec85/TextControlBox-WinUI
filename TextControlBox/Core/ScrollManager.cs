@@ -53,7 +53,7 @@ internal class ScrollManager
     internal void VerticalScrollBar_Scroll(object sender, ScrollEventArgs e)
     {
         //only update when a line was scrolled
-        if ((int)(verticalScrollBar.Value / textRenderer.SingleLineHeight * DefaultVerticalScrollSensitivity) != textRenderer.NumberOfStartLine)
+        if (textRenderer.IsScrolledToDifferentRow)
         {
             canvasHelper.UpdateAll();
         }
@@ -71,7 +71,12 @@ internal class ScrollManager
 
     public void ScrollLineIntoViewIfOutside(int line, bool update = true)
     {
-        if (textRenderer.OutOfRenderedArea(line))
+        if (textRenderer.IsWordWrapEnabled)
+        {
+            if (textRenderer.TryGetWrappedScrollRow(line, null, out int row))
+                ScrollWrappedRowIntoView(row, center: false, update: update);
+        }
+        else if (textRenderer.OutOfRenderedArea(line))
             ScrollLineIntoView(line, update);
     }
 
@@ -90,6 +95,13 @@ internal class ScrollManager
 
     public void ScrollLineIntoView(int line, bool update = true)
     {
+        if (textRenderer.IsWordWrapEnabled)
+        {
+            if (textRenderer.TryGetWrappedScrollRow(line, null, out int row))
+                ScrollWrappedRowIntoView(row, center: true, update: update);
+            return;
+        }
+
         verticalScrollBar.Value = (line - textRenderer.NumberOfRenderedLines / 2) * textRenderer.SingleLineHeight / DefaultVerticalScrollSensitivity;
         
         if(update)
@@ -98,12 +110,24 @@ internal class ScrollManager
 
     public void ScrollTopIntoView(bool update = true)
     {
+        if (textRenderer.IsWordWrapEnabled)
+        {
+            ScrollWrappedCursorIntoView(center: false, update: update);
+            return;
+        }
+
         verticalScrollBar.Value = (cursorManager.LineNumber - 1) * textRenderer.SingleLineHeight / DefaultVerticalScrollSensitivity;
         if(update)
             canvasHelper.UpdateAll();
     }
     public void ScrollBottomIntoView(bool update = true)
     {
+        if (textRenderer.IsWordWrapEnabled)
+        {
+            ScrollWrappedCursorIntoView(center: false, update: update);
+            return;
+        }
+
         verticalScrollBar.Value = (cursorManager.LineNumber - textRenderer.NumberOfRenderedLines + 1) * textRenderer.SingleLineHeight / DefaultVerticalScrollSensitivity;
         if(update)
             canvasHelper.UpdateAll();
@@ -111,6 +135,12 @@ internal class ScrollManager
 
     public void ScrollPageUp()
     {
+        if (textRenderer.IsWordWrapEnabled)
+        {
+            ScrollWrappedPage(-1);
+            return;
+        }
+
         cursorManager.LineNumber -= textRenderer.NumberOfRenderedLines;
         if (cursorManager.LineNumber < 0)
             cursorManager.LineNumber = 0;
@@ -122,6 +152,12 @@ internal class ScrollManager
 
     public void ScrollPageDown()
     {
+        if (textRenderer.IsWordWrapEnabled)
+        {
+            ScrollWrappedPage(1);
+            return;
+        }
+
         cursorManager.LineNumber += textRenderer.NumberOfRenderedLines;
         if (cursorManager.LineNumber > textManager.LinesCount - 1)
             cursorManager.LineNumber = textManager.LinesCount - 1;
@@ -131,6 +167,12 @@ internal class ScrollManager
 
     public void UpdateScrollToShowCursor(bool update = true)
     {
+        if (textRenderer.IsWordWrapEnabled)
+        {
+            ScrollWrappedCursorIntoView(center: false, update: update);
+            return;
+        }
+
         if (textRenderer.NumberOfStartLine + textRenderer.NumberOfRenderedLines - 1 <= cursorManager.LineNumber)
         {
             verticalScrollBar.Value =
@@ -150,6 +192,9 @@ internal class ScrollManager
 
     public bool ScrollIntoViewHorizontal(CanvasControl canvasText, bool update = true)
     {
+        if (textRenderer.IsWordWrapEnabled)
+            return false;
+
         float curPosInLine = CursorHelper.GetCursorPositionInLine(
             textRenderer.CurrentLineTextLayout,
             cursorManager.currentCursorPosition,
@@ -184,6 +229,9 @@ internal class ScrollManager
 
     public void EnsureHorizontalScrollBounds(CanvasControl canvasText, LongestLineManager longestLineManager, bool triggeredByCursor, bool forceRecalculateLongestLine = false)
     {
+        if (textRenderer.IsWordWrapEnabled)
+            return;
+
         longestLineManager.CheckRecalculateLongestLine(forceRecalculateLongestLine);
 
         //Apply longest width to scrollbar
@@ -197,5 +245,42 @@ internal class ScrollManager
             else
                 canvasHelper.UpdateCursor();
         }
+    }
+
+    public void ScrollWrappedCursorIntoView(bool center, bool update = true)
+    {
+        if (textRenderer.TryGetWrappedScrollRow(cursorManager.LineNumber, cursorManager.CharacterPosition, out int row))
+            ScrollWrappedRowIntoView(row, center, update);
+    }
+
+    private void ScrollWrappedRowIntoView(int row, bool center, bool update)
+    {
+        double rowStep = (double)textRenderer.SingleLineHeight / DefaultVerticalScrollSensitivity;
+        int first = textRenderer.GetScrollRow();
+        int pageSize = Math.Max(1, (int)(textRenderer.ViewportHeight / textRenderer.SingleLineHeight));
+        int target = first;
+        if (center)
+            target = row - pageSize / 2;
+        else if (row < first)
+            target = row;
+        else if (row >= first + pageSize)
+            target = row - pageSize + 1;
+
+        verticalScrollBar.Value = Math.Max(0, target) * rowStep;
+        if (update)
+            canvasHelper.UpdateAll();
+    }
+
+    private void ScrollWrappedPage(int direction)
+    {
+        double page = textRenderer.ViewportHeight / DefaultVerticalScrollSensitivity;
+        verticalScrollBar.Value += direction * page;
+        int line = textRenderer.GetWrappedLineAt(direction < 0 ? 0 : textRenderer.ViewportHeight - 1);
+        if (line >= 0)
+        {
+            cursorManager.LineNumber = line;
+            cursorManager.CharacterPosition = Math.Min(cursorManager.CharacterPosition, textManager.GetLineLength(line));
+        }
+        canvasHelper.UpdateAll();
     }
 }

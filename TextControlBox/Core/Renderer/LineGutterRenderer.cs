@@ -39,7 +39,7 @@ internal sealed class LineGutterRenderer
         zoomManager = currentZoomManager;
     }
 
-    public void Draw(
+    public bool DrawBackground(
         CanvasControl canvas,
         CanvasDrawEventArgs args,
         EditorRenderViewport viewport,
@@ -50,7 +50,7 @@ internal sealed class LineGutterRenderer
             || gutterWidth <= 0
             || !decorationStore.HasDecorations)
         {
-            return;
+            return false;
         }
 
         EnsureBuffers(viewport.VisibleLineCount);
@@ -72,7 +72,16 @@ internal sealed class LineGutterRenderer
         }
 
         DrawBackgrounds(canvas, args, viewport, gutterWidth);
+        return true;
+    }
 
+    public void DrawMarkers(
+        CanvasControl canvas,
+        CanvasDrawEventArgs args,
+        EditorRenderViewport viewport,
+        float gutterWidth,
+        float textVerticalOffset)
+    {
         markerText.Clear();
         for (int lineOffset = 0; lineOffset < viewport.VisibleLineCount; lineOffset++)
         {
@@ -82,7 +91,11 @@ internal sealed class LineGutterRenderer
 
             markerLengths[lineOffset] = markerText.Length - markerStarts[lineOffset];
             if (lineOffset + 1 < viewport.VisibleLineCount)
-                markerText.Append(textManager.NewLineCharacter);
+            {
+                int rows = viewport.GetLineRowCount(viewport.FirstVisibleLine + lineOffset);
+                for (int row = 0; row < rows; row++)
+                    markerText.Append(textManager.NewLineCharacter);
+            }
         }
 
         EnsureTextFormat();
@@ -112,7 +125,7 @@ internal sealed class LineGutterRenderer
         args.DrawingSession.DrawTextLayout(
             textLayout,
             0,
-            textLayoutManager.TextVerticalOffset,
+            textVerticalOffset,
             Color.FromArgb(0, 0, 0, 0));
     }
 
@@ -140,8 +153,8 @@ internal sealed class LineGutterRenderer
             while (lineOffset < viewport.VisibleLineCount
                 && Nullable.Equals(resolvedBackgrounds[lineOffset], backgroundColor));
 
-            float top = (blockStart * viewport.LineHeight) + viewport.TopOffset;
-            float bottom = (lineOffset * viewport.LineHeight) + viewport.TopOffset;
+            float top = viewport.GetLineTop(viewport.FirstVisibleLine + blockStart);
+            float bottom = viewport.GetLineTop(viewport.FirstVisibleLine + lineOffset);
             args.DrawingSession.FillRectangle(
                 Utils.CreateLineAlignedRect(
                     0,

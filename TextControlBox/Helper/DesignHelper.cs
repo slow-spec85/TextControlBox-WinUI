@@ -20,7 +20,7 @@ internal class DesignHelper
         Color.FromArgb(255, 50, 50, 50),
         Color.FromArgb(100, 0, 100, 255),
         Color.FromArgb(255, 0, 0, 0),
-        Color.FromArgb(50, 200, 200, 200),
+        Color.FromArgb(35, 0, 0, 0),
         Color.FromArgb(255, 180, 180, 180),
         Color.FromArgb(0, 0, 0, 0),
         Color.FromArgb(100, 200, 120, 0),
@@ -31,7 +31,7 @@ internal class DesignHelper
         Color.FromArgb(255, 255, 255, 255),
         Color.FromArgb(100, 0, 100, 255),
         Color.FromArgb(255, 255, 255, 255),
-        Color.FromArgb(50, 100, 100, 100),
+        Color.FromArgb(35, 255, 255, 255),
         Color.FromArgb(255, 100, 100, 100),
         Color.FromArgb(0, 0, 0, 0),
         Color.FromArgb(100, 160, 80, 0),
@@ -44,6 +44,7 @@ internal class DesignHelper
     public CanvasSolidColorBrush LineNumberColorBrush;
     public CanvasSolidColorBrush LineHighlighterBrush;
 
+    private Color? lineHighlighterColorOverride;
     private CoreTextControlBox coreTextbox;
     private TextRenderer textRenderer;
     private CanvasUpdateManager canvasUpdateManager;
@@ -71,8 +72,22 @@ internal class DesignHelper
         TextColorBrush = new CanvasSolidColorBrush(resourceCreator, _Design.TextColor);
         CursorColorBrush = new CanvasSolidColorBrush(resourceCreator, _Design.CursorColor);
         LineNumberColorBrush = new CanvasSolidColorBrush(resourceCreator, _Design.LineNumberColor);
-        LineHighlighterBrush = new CanvasSolidColorBrush(resourceCreator, _Design.LineHighlighterColor);
+        LineHighlighterBrush = new CanvasSolidColorBrush(resourceCreator, lineHighlighterColorOverride ?? _Design.LineHighlighterColor);
         ColorResourcesCreated = true;
+    }
+
+    public Color? LineHighlighterColorOverride
+    {
+        get => lineHighlighterColorOverride;
+        set
+        {
+            if (lineHighlighterColorOverride == value)
+                return;
+
+            lineHighlighterColorOverride = value;
+            ColorResourcesCreated = false;
+            canvasUpdateManager.UpdateAll();
+        }
     }
 
     public ElementTheme RequestedTheme

@@ -1119,6 +1119,13 @@ public partial class TextControlBox : UserControl
         set => coreTextBox.ShowLineHighlighter = value;
     }
 
+    /// <summary>Overrides the current-line highlight color. Null uses the editor design color.</summary>
+    public Windows.UI.Color? LineHighlighterColorOverride
+    {
+        get => coreTextBox.designHelper.LineHighlighterColorOverride;
+        set => coreTextBox.designHelper.LineHighlighterColorOverride = value;
+    }
+
     /// <summary>
     /// Gets or sets the zoom factor in percent for the text.
     /// </summary>
@@ -1388,6 +1395,16 @@ public partial class TextControlBox : UserControl
     /// Gets the actual rendered height, in device-independent units (DIPs), of a line of text in the control.
     /// </summary>
     public float ActualLineHeight => coreTextBox.ActualLineHeight;
+
+    /// <summary>Enables visual word wrap while the editor is read-only.</summary>
+    public bool IsWordWrapEnabled
+    {
+        get => coreTextBox.IsWordWrapEnabled;
+        set => coreTextBox.IsWordWrapEnabled = value;
+    }
+
+    /// <summary>Returns the document line at a vertical viewport coordinate, or -1 when unavailable.</summary>
+    public int GetLineIndexAt(double viewportY) => coreTextBox.GetLineIndexAt(viewportY);
 
     /// <summary>
     /// Represents a delegate used for handling the text changed event in the TextControlBox.

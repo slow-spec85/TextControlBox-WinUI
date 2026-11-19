@@ -1,10 +1,10 @@
 ﻿using Microsoft.Graphics.Canvas.Brushes;
 using Microsoft.Graphics.Canvas.Text;
 using Microsoft.Graphics.Canvas.UI.Xaml;
-using System.Diagnostics;
-using System.Numerics;
+using System;
 using TextControlBoxNS.Core.Text;
 using TextControlBoxNS.Helper;
+using Windows.Foundation;
 
 namespace TextControlBoxNS.Core.Renderer;
 
@@ -47,17 +47,30 @@ internal class CursorRenderer
         this.caretBlinkManager = caretBlinkManager;
     }
 
-    public void RenderCursor(CanvasTextLayout textLayout, int characterPosition, float xOffset, float y, float lineHeight, CursorSize customSize, CanvasDrawEventArgs args, CanvasSolidColorBrush cursorColorBrush)
+    private void RenderCursor(CanvasTextLayout textLayout, int characterPosition, float xOffset, float y, float lineHeight, CursorSize customSize, CanvasDrawEventArgs args, CanvasSolidColorBrush cursorColorBrush)
     {
         if (textLayout == null)
             return;
 
 
-        Vector2 vector = textLayout.GetCaretPosition(characterPosition < 0 ? 0 : characterPosition, false);
-        if (customSize == null)
-            args.DrawingSession.FillRectangle(vector.X + xOffset, y, 2, lineHeight, cursorColorBrush);
+        float x;
+        if (textRenderer.IsWordWrapEnabled)
+        {
+            Point caret = TextRenderer.GetWrappedCaretPosition(textLayout, characterPosition, y);
+            x = (float)caret.X;
+            y = (float)caret.Y;
+            if (y + lineHeight <= 0 || y >= textRenderer.ViewportHeight)
+                return;
+        }
         else
-            args.DrawingSession.FillRectangle(vector.X + xOffset + customSize.OffsetX, y + customSize.OffsetY, (float)customSize.Width, (float)customSize.Height, cursorColorBrush);
+        {
+            x = textLayout.GetCaretPosition(Math.Max(0, characterPosition), false).X;
+        }
+
+        if (customSize == null)
+            args.DrawingSession.FillRectangle(x + xOffset, y, 2, lineHeight, cursorColorBrush);
+        else
+            args.DrawingSession.FillRectangle(x + xOffset + customSize.OffsetX, y + customSize.OffsetY, (float)customSize.Width, (float)customSize.Height, cursorColorBrush);
     }
 
     public void Draw(CanvasControl canvasText, CanvasControl canvasCursor, CanvasDrawEventArgs args)
@@ -74,7 +87,14 @@ internal class CursorRenderer
         }
 
         float renderPosY = (float)((cursorManager.LineNumber - textRenderer.NumberOfStartLine) * textRenderer.SingleLineHeight) + textRenderer.SingleLineHeight / scrollManager.DefaultVerticalScrollSensitivity;  
-        if (renderPosY > textRenderer.NumberOfRenderedLines * textRenderer.SingleLineHeight || renderPosY < 0)
+        if (textRenderer.IsWordWrapEnabled)
+        {
+            if (textRenderer.WrappedViewport is not { } viewport || textRenderer.OutOfRenderedArea(cursorManager.LineNumber))
+                return;
+
+            renderPosY = viewport.GetLineTop(cursorManager.LineNumber);
+        }
+        else if (renderPosY > textRenderer.NumberOfRenderedLines * textRenderer.SingleLineHeight || renderPosY < 0)
             return;
 
         textRenderer.UpdateCurrentLineTextLayout(canvasText);
